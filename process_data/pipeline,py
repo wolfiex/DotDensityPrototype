@@ -1,0 +1,239 @@
+import os 
+import numpy as np
+import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Point,box
+from p_tqdm import p_map,p_umap,p_uimap,p_imap
+import mercantile
+from functools import partial
+import vector_tile_base
+
+
+try:
+    from customtiles import * 
+except:    
+    os.popen('f2py -c tilefunctions.f90 -m customtiles').read()
+    from customtiles import * 
+
+
+
+
+
+
+
+extent = 4096
+half_extent = extent/2 
+half_buffer = 2./14. * half_extent
+
+# data location
+dloc = '/Users/danielellis/ONSVis/DotDensityTiles/processing/'
+# our highest zoom level
+zoomh = 8
+# output locaiton 
+
+
+
+typen = 'TS003_hh_family_composition_4a_2021'
+'TS021_ethnic_group_tb_6a_2021'
+
+oloc = '/Users/danielellis/ONSVis/'+typen
+os.system(f'mkdir {oloc}')
+
+
+
+
+
+# def get_data(typen):
+
+''' Lets  load all relevant data '''
+
+geom = gpd.read_file(dloc+'geom.shp').set_index('OA21CD')
+geom = geom.geometry
+
+data = pd.read_csv(dloc+'2021-oa-data/'+typen+'.csv').set_index('Geography code')
+
+
+# automatically select the sections with data in them. 
+start = list(data.columns).index('Classification') + 1
+end = list(data.columns).index('Total')
+selection = list(data.columns)[start:end]
+data = data[selection]
+
+# combine the 
+oas = list(set(data.index) & set(geom.index))
+
+
+
+#############################
+#  Funciton to generate the points. 
+#############################
+
+
+def makepoints(area_chunks,groupby = 5):
+    '''This functions processes the points for several areas'''
+    dummy = []
+
+    for area in area_chunks:
+        row = data.loc[area]
+        for cid,col in enumerate(selection):
+                polygon = geom.loc[area]
+                points = []
+                # convert geometry into a list of coordinates
+                try: poly = np.array(polygon.exterior.coords.xy).tolist()
+                except AttributeError:
+                    poly = np.array(polygon.geoms[0].exterior.coords.xy).tolist()
+
+                counter = 0
+                nvar = int(row[col])
+                nstop= int(nvar*1.5) #  max range as to avoid infinte loops
+                minx, miny, maxx, maxy = polygon.bounds
+
+                for cds in np.array([np.random.uniform(minx, maxx,nstop), np.random.uniform(miny, maxy,nstop)]).T:
+                    
+                    if (point_in_polygon(*cds,*poly)): 
+                        if cds != []:
+                            points.append(cds)
+                            counter += 1
+                            if counter >= nvar:
+                                break
+                    
+                if len(points)>0:
+                    dummy.append([cid,np.array_split(points,groupby),*[i[0] for i in polygon.centroid.xy]])
+
+    #  shuffle the points to induce randomness. 
+    np.random.shuffle(dummy)
+    return dummy
+
+
+#############################
+#  Actually generate these points in 'll
+#############################
+
+
+try:
+    gdf = pd.read_pickle(f'{oloc}/points.pkl')
+except:
+
+    split = np.array_split(oas,20000)
+
+    res = []
+    for l in p_uimap(makepoints,split):
+        res.extend(l)
+
+    gdf = pd.DataFrame(np.array(res))
+    gdf.columns = 'cat point x y'.split()
+    gdf = gdf.sort_values('x y'.split())
+
+    
+    print(f'saving {typen}')
+    gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
+
+    os.system(f'echo "*.pkl" >> {oloc}/.gitignore')
+
+
+
+
+
+
+def gunwale_bobbing(schema,data=[]):
+    
+    ''' speedy tiles 
+    
+    schema x,y,z
+    data dataframe
+    '''
+    
+    if not len(data): data = gdf.loc[:]
+    # data = gdf.loc[:] 
+
+    x,y,z = schema
+    bbox = mercantile.bounds(x,y,z)
+
+    subset = data.loc[data['x'].between(bbox.west,bbox.east) & data['y'].between(bbox.south,bbox.north)]
+
+    if not len(subset): return 0 
+
+ 
+    vt = vector_tile_base.VectorTile()
+    layer = vt.add_layer('custom_data_dan')#,x=x,y=y,zoom=z,version=3)
+    layer.extent=extent
+
+    # by = 13-int(z)
+    by= 2**(14-int(z))
+    if by<1: return 0 
+
+    # for multipoint in subset: #.iterrows():
+    for _,multipoint in subset.iterrows():
+        cat = multipoint['cat']
+
+        for areagroup in np.array(multipoint['point'])[z%2::by]: 
+           
+            for p in areagroup:
+                feature = layer.add_point_feature()
+                feature.add_points(list(transform_geo(*bbox, *p, extent))) 
+                feature.attributes = { 'cat': cat }
+
+    
+    encoded_tile = vt.serialize()
+    output = oloc
+    try:
+        with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
+            f.write(encoded_tile)
+    except:
+        os.popen(f'mkdir {output}/{z}  >/dev/null 2>&1').read()
+        os.popen(f'mkdir {output}/{z}/{x}  >/dev/null 2>&1').read()
+        with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
+            f.write(encoded_tile)
+       
+   
+
+    if z < 14 and len(subset) : 
+        del vt, encoded_tile, _, multipoint
+        tiles = mercantile.tiles(*bbox, zooms=[z+1])
+        for t in tiles:
+            gunwale_bobbing(t,subset)
+
+
+
+#############################
+# computations 
+#############################
+
+
+
+
+yn = gdf.y.min()
+yx = gdf.y.max()
+xn = gdf.x.min()
+xx = gdf.x.max()
+
+bounds = (xn,yn,xx,yx)
+
+# bounds = (-0.488892,51.280817,0.189514,51.699800)
+tiles = mercantile.tiles(*bounds, zooms=[zoomh])
+
+os.system(f'rm -rf {oloc}/*/')
+
+
+p_umap(gunwale_bobbing,list(tiles))
+
+
+
+'''
+Lets generate the data table 
+'''
+
+geom = gpd.GeoDataFrame(geom)
+
+geom['ratios'] = [str(list(data.loc[i].values)).replace(' ','') for i in geom.index]
+
+
+geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
+os.system(f'echo "*.geojson" >> {oloc}/.gitignore')
+
+
+os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson')
+
+
+os.system(f'cd {oloc}; git add -A; git commit -m "update"; git push && echo "saved {typen}" ')
+
