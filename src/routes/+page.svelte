@@ -42,46 +42,14 @@ async function changetile(type){
 if (!map) return 0  
 console.log('changetitle',type,map,map.getSource('dot-src'))
 
-
-//   type = 'TS017_hh_size_5a_2021';
-
 const host = 'https://onsvisual.github.io/'
-// //'https://wolfiex.github.io/DotDensityTiles/static/'
 map.getSource('dot-src').setTiles([host +type+'/{z}/{x}/{y}.pbf?raw=true',])
+map.getSource('ratio-src').setTiles([host +type+'/ratios/{z}/{x}/{y}.pbf?raw=true',])
 // // map.getLayer('dot-data').sourceLayer=type
 
 
-
-
 switch (type) {
-  // case 'TS002_legal_partnership_status_3a_2021':
-  //     keys = ['Married or in a registered civil partnership',
-  //       'Other marital or civil partnership status']
-  //     csum = [81.,100.]
-  //   break;
-  // case 'TS017_hh_size_5a_2021':
-  //    keys = ['1 person in household',
-  //     '2 people in household',
-  //     '3 people in household',
-  //     '4 or more people in household']
-  //    csum = [ 88.09201633, 100.        ,  46.60850951,  57.61101176]
-  // break
-  // case 'TS021_ethnic_group_tb_6a_2021':
-  // //  type = 'TS021_ethnic_group_tb_6a_2021'
-  //   keys = ['Asian, Asian British or Asian Welsh',
-  //     'Black, Black British, Black Welsh, Caribbean or African',
-  //     'Mixed or Multiple ethnic groups',
-  //     'White',
-  //     'Other ethnic group']
-  //   csum = [ 11.03618827,   4.7953314 ,   3.48013752, 100.        ,
-  //           2.50895191];
-  //   break
-  // case 'TS003_hh_family_composition_4a_2021':
-  //   keys = ['Multiple family household',
-  //       'One person household',
-  //       'Single family household']
-  //   csum = [ 10.69615599,  47.74876488, 100.        ]
-  //   break
+
 
   case "TS021_ethnic_group_tb_6a_2021":
       keys = ['Asian, Asian British or Asian Welsh', 'Black, Black British, Black Welsh, Caribbean or African', 'Mixed or Multiple ethnic groups', 'White', 'Other ethnic group']
@@ -97,9 +65,6 @@ switch (type) {
 }
 
 
-
-
-// map.setPaintProperty('dot-data', 'circle-color', 'green')
 newpaint(colour);
 
 
@@ -154,23 +119,23 @@ newpaint(colour);
     })
     
 
-     function screen(){
+    //  function screen(){
 
-        if (update){
-          csum = [100,100,100,100,100]
-          var d = new Date();
-          if ( d - debounce > 2000) {
-          debounce = d;
-          var c = [0,0,0,0,0];
-          map.queryRenderedFeatures().forEach(d=>c[d.properties.cat]+=1);
-          var mx = Math.max(...c);
-          csum = c.map(d=>100.*d/mx);
-          legend.classList.remove('loading');
-        } else {
+    //     if (update){
+    //       csum = [100,100,100,100,100]
+    //       var d = new Date();
+    //       if ( d - debounce > 2000) {
+    //       debounce = d;
+    //       var c = [0,0,0,0,0];
+    //       map.queryRenderedFeatures().forEach(d=>c[d.properties.cat]+=1);
+    //       var mx = Math.max(...c);
+    //       csum = c.map(d=>100.*d/mx);
+    //       legend.classList.remove('loading');
+    //     } else {
           
-        }
+    //     }
        
-    }}
+    // }}
 
 
     map.on('moveend',()=>{if (update) legend.classList.add('loading')})
