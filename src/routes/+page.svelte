@@ -16,7 +16,8 @@
   let debounce = new Date()
   let update = false
   let keytitle = 'England + Wales '
-  let type,keys,tile;
+  let keycentre = false
+  let type,keys,tile,bcsum;
 
   tile = "TS021_ethnic_group_tb_6a_2021"
   colour = [...colourbase];
@@ -53,47 +54,48 @@ map.getSource('dot-src').setTiles([host +type+'/{z}/{x}/{y}.pbf?raw=true',])
 
 
 switch (type) {
-  case 'TS002_legal_partnership_status_3a_2021':
-      keys = ['Married or in a registered civil partnership',
-        'Other marital or civil partnership status']
-      csum = [81.,100.]
+  // case 'TS002_legal_partnership_status_3a_2021':
+  //     keys = ['Married or in a registered civil partnership',
+  //       'Other marital or civil partnership status']
+  //     csum = [81.,100.]
+  //   break;
+  // case 'TS017_hh_size_5a_2021':
+  //    keys = ['1 person in household',
+  //     '2 people in household',
+  //     '3 people in household',
+  //     '4 or more people in household']
+  //    csum = [ 88.09201633, 100.        ,  46.60850951,  57.61101176]
+  // break
+  // case 'TS021_ethnic_group_tb_6a_2021':
+  // //  type = 'TS021_ethnic_group_tb_6a_2021'
+  //   keys = ['Asian, Asian British or Asian Welsh',
+  //     'Black, Black British, Black Welsh, Caribbean or African',
+  //     'Mixed or Multiple ethnic groups',
+  //     'White',
+  //     'Other ethnic group']
+  //   csum = [ 11.03618827,   4.7953314 ,   3.48013752, 100.        ,
+  //           2.50895191];
+  //   break
+  // case 'TS003_hh_family_composition_4a_2021':
+  //   keys = ['Multiple family household',
+  //       'One person household',
+  //       'Single family household']
+  //   csum = [ 10.69615599,  47.74876488, 100.        ]
+  //   break
+
+  case "TS021_ethnic_group_tb_6a_2021":
+      keys = ['Asian, Asian British or Asian Welsh', 'Black, Black British, Black Welsh, Caribbean or African', 'Mixed or Multiple ethnic groups', 'White', 'Other ethnic group']
+      csum = [11.04, 4.797, 3.48, 100.0, 2.51]
+      bcsum = [11.04, 4.797, 3.48, 100.0, 2.51]
     break;
-  case 'TS017_hh_size_5a_2021':
-     keys = ['1 person in household',
-      '2 people in household',
-      '3 people in household',
-      '4 or more people in household']
-     csum = [ 88.09201633, 100.        ,  46.60850951,  57.61101176]
-  break
-  case 'TS021_ethnic_group_tb_6a_2021':
-  //  type = 'TS021_ethnic_group_tb_6a_2021'
-    keys = ['Asian, Asian British or Asian Welsh',
-      'Black, Black British, Black Welsh, Caribbean or African',
-      'Mixed or Multiple ethnic groups',
-      'White',
-      'Other ethnic group']
-    csum = [ 11.03618827,   4.7953314 ,   3.48013752, 100.        ,
-            2.50895191];
-    break
-  case 'TS003_hh_family_composition_4a_2021':
-    keys = ['Multiple family household',
-        'One person household',
-        'Single family household']
-    csum = [ 10.69615599,  47.74876488, 100.        ]
-    break
-
   default:
-  //  type = 'TS021_ethnic_group_tb_6a_2021'
-  keys = ['Asian, Asian British or Asian Welsh',
-      'Black, Black British, Black Welsh, Caribbean or African',
-      'Mixed or Multiple ethnic groups',
-      'White',
-      'Other ethnic group']
-    csum = [ 11.03618827,   4.7953314 ,   3.48013752, 100.        ,
-            2.50895191];
-    break
-
+      type = "TS021_ethnic_group_tb_6a_2021"
+      keys = ['Asian, Asian British or Asian Welsh', 'Black, Black British, Black Welsh, Caribbean or African', 'Mixed or Multiple ethnic groups', 'White', 'Other ethnic group']
+      csum = [11.04, 4.797, 3.48, 100.0, 2.51]
+      bcsum = [11.04, 4.797, 3.48, 100.0, 2.51]
+    break;
 }
+
 
 
 
@@ -189,19 +191,29 @@ newpaint(colour);
     })
 
     map.on('click', 'poly-layer', function (e) {
-
-      console.log(e.features[0].properties)
+      keycentre = e.lngLat.toArray();
+      if (map.getZoom()<12) map.setZoom(12)
 
       e = e.features[0].properties
       var c = JSON.parse(e.ratios);
       var mx = Math.max(...c);
       csum = c.map(d=>100.*d/mx);
+      var npeople = c.reduce((a, b) => a + b, 0)
+      keytitle = 'Output Area: '+e.OA21CD+ '  (' + npeople + ' people)'
 
-      keytitle = 'Output Area: '+e.OA21CD
+      map.setPaintProperty('poly-layer', 'fill-outline-color', [
+        'match',
+        ['get', 'OA21CD'],
+        e.OA21CD,
+        'red',
+        'rgba(200, 200, 240, 0.1)',
+      ]);
+
 
       });
  
-
+      document.getElementById('legendtitle').addEventListener('click',()=>
+  map.flyTo({center:keycentre,zoom:14}))
 
 map.on('idle',screen)
 
@@ -248,13 +260,14 @@ $: try{newpaint(colour)}catch(err){}
 <div class="menu">
 <h1>Census Dot Density Map</h1>
 
-<label style='float:left;font-size:small!important;margin-top:1.25em'>Use page avarage: </label> 
+<!-- <label style='float:left;font-size:small!important;margin-top:1.25em'>Use page avarage: </label> 
 <Toggle size='sm' style='float:right;margin-right:30px' bind:toggled={update} />
 <br>
-<br><br>
+<br><br>  -->
 <br>
 <label> Select Table </label>
 <br>
+
 <Dropdown
   items={names}
   bind:selectedId={tile}
@@ -267,12 +280,13 @@ $: try{newpaint(colour)}catch(err){}
 
   if (!psc) alert('Incorrect Postcode');
 
-  console.log(psc)
-
   map.flyTo({
   center: [psc.longitude,psc.latitude],
   zoom: 14 
 }) 
+
+
+
 
 
 }
@@ -291,8 +305,8 @@ $: try{newpaint(colour)}catch(err){}
 <div class="legend">
 
     
-  <label style='float:right;text-decoration: underline;margin:auto'>{!update? keytitle: 'Page Avarage'} </label> <br>
-    <Categories keys={keys} bind:colour colourbase={colourbase} csum={csum}/>
+<label id='legendtitle' style='float:right;margin:auto;font-size:medium;'>{!update? keytitle: 'Page Avarage'} </label> <br><br>
+    <Categories keys={keys} bind:colour colourbase={colourbase} csum={csum} bcsum={bcsum}/>
 </div>
 
 <style>
@@ -366,6 +380,8 @@ $: try{newpaint(colour)}catch(err){}
       align-content: center;
       left:4px;
 	}
+
+  #legendtitle:hover{color:dodgerblue}
   </style>
   
   <link rel="preconnect" href="https://fonts.googleapis.com" />

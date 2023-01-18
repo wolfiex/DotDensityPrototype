@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="./favicon.png" />
+		<meta name="viewport" content="width=device-width" />
+		<meta http-equiv="content-security-policy" content="">
+		<link href="./_app/immutable/assets/_page-c643c2f8.css" rel="stylesheet">
+		<link rel="modulepreload" href="./_app/immutable/start-5cbae3c4.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index-e0a99da6.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/singletons-1f742220.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/preload-helper-41c905a7.js">
+		<link rel="modulepreload" href="./_app/immutable/components/layout.svelte-091163b9.js">
+		<link rel="modulepreload" href="./_app/immutable/modules/pages/_layout.js-9cbb603b.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/_layout-da46b06b.js">
+		<link rel="modulepreload" href="./_app/immutable/components/pages/_page.svelte-0a9aaef8.js"><!-- HEAD_svelte-1l5f18d_START --><link rel="stylesheet" href="/coloris.min.css"><script src="/coloris.min.js"></script><!-- HEAD_svelte-1l5f18d_END -->
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">
+
+
+<div id="map"></div>
+
+
+
+
+<div class="menu svelte-en5mmv"><h1 class="svelte-en5mmv">Census Dot Density Map</h1>
+
+<label style="float:left;font-size:small!important;margin-top:1.25em" class="svelte-en5mmv">Use page avarage: </label> 
+
+<div style="float:right;margin-right:30px; user-select: none" class="bx--form-item">
+  <input role="switch" type="checkbox"   id="ccs-0.kt7cxvsffcs" class="bx--toggle-input bx--toggle-input--small">
+  <label aria-label="Toggle" for="ccs-0.kt7cxvsffcs" class="bx--toggle-input__label"><span>
+        
+      </span>
+    <span style="false" class="bx--toggle__switch"><span aria-hidden="true" class="bx--toggle__text--off">
+          Off
+        </span>
+      <span aria-hidden="true" class="bx--toggle__text--on">
+          On
+        </span></span></label></div>
+<br>
+<br><br>
+<br>
+<label class="svelte-en5mmv">Select Table </label>
+<br>
+
+
+<div class="bx--dropdown__wrapper bx--list-box__wrapper   ">
+  <div tabindex="-1" class="bx--dropdown false false false false
+      false
+      false
+      false
+      false
+      false bx--list-box       ">
+    
+    <button type="button" tabindex="0" aria-expanded="false"  id="ccs-0.cpwj3qozfdt" class="bx--list-box__field"><span class="bx--list-box__label">Ethnicity</span>
+      <div class="bx--list-box__menu-icon "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" role="img" aria-label="Open menu"><title>Open menu</title><path d="M16 22L6 12 7.4 10.6 16 19.2 24.6 10.6 26 12z"></path></svg></div></button>
+    </div>
+
+
+  </div>
+<br>
+<label class="svelte-en5mmv">Find Postcode </label>
+<br>
+<div role="search" aria-labelledby="ccs-0.78c8cba35jb-search" class="bx--search   bx--search--sm">
+    <div class="bx--search-magnifier"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden class="bx--search-magnifier-icon"><path d="M29,27.5859l-7.5521-7.5521a11.0177,11.0177,0,1,0-1.4141,1.4141L27.5859,29ZM4,13a9,9,0,1,1,9,9A9.01,9.01,0,0,1,4,13Z"></path></svg></div>
+    <label id="ccs-0.78c8cba35jb-search" for="ccs-0.78c8cba35jb" class="bx--label">
+        
+      </label>
+    
+    <input type="text" role="searchbox" autocomplete="off" id="ccs-0.78c8cba35jb" placeholder="Search..." class="bx--search-input" value="">
+    <button type="button" aria-label="Clear search input"  class="bx--search-close bx--search-close--hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden><path d="M24 9.4L22.6 8 16 14.6 9.4 8 8 9.4 14.6 16 8 22.6 9.4 24 16 17.4 22.6 24 24 22.6 17.4 16 24 9.4z"></path></svg></button></div>
+
+  <label style="display:block;padding-top:2px;padding-bottom:1em;" class="svelte-en5mmv">1 dot = <span id="people"></span> people</label></div>
+
+
+<a id="instruct" href="https://scribehow.com/shared/Prototype_Dot_Density_Map__yreqzD5ISB6EQr2IU9FWbg" class="svelte-en5mmv">Usage Instructions. </a>
+
+
+
+<div class="legend svelte-en5mmv"><label style="float:right;text-decoration: underline;margin:auto" class="svelte-en5mmv">England + Wales </label> <br>
+    
+
+
+
+<main><span class="svelte-4x0p5">::calculating::   </span>
+
+
+
+</main></div>
+
+
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100&display=swap" rel="stylesheet">
+
+
+		<script type="module" data-sveltekit-hydrate="f0fahc">
+			import { start } from "./_app/immutable/start-5cbae3c4.js";
+
+			start({
+				env: {},
+				paths: {"base":"","assets":""},
+				target: document.querySelector('[data-sveltekit-hydrate="f0fahc"]').parentNode,
+				version: "1674043633188",
+				hydrate: {
+					node_ids: [0, 2],
+					data: [null,null],
+					form: null
+				}
+			});
+		</script>
+	</div>
+	</body>
+</html>

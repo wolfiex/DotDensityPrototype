@@ -10,6 +10,7 @@ import {ProgressBar} from 'carbon-components-svelte'
 	import { onMount } from 'svelte';
 
 export let csum;
+export let bcsum;
 export let keys=[];
 export let colour;
 export let colourbase;
@@ -29,6 +30,10 @@ async function bcupdate(colour){
         colour.forEach((c,i)=>{
             try{
             document.querySelector(`#cat_${i} div.bx--progress-bar__bar`).style['background-color'] = c 
+
+            document.querySelector(`#catbase_${i} div.bx--progress-bar__bar`).style['background-color'] = c 
+
+
             }catch(err){}
         
         })
@@ -80,6 +85,11 @@ $: bcupdate(colour)
     helperText=''
   />
 
+  <ProgressBar
+  value={1+bcsum[i]}
+  id={'catbase_'+i}
+/>
+
 </div>
   {/each}
 
@@ -96,10 +106,14 @@ span{
     float:right;
 }
 
+:global(div[id^="cat_"]){height:.5em!important;}
+:global(div[id^="catbase_"]){height:1px!important;top:-1.3em;
+}
+
 .lk{
     padding:1px;
-    padding-top:4px;
-    margin-top:2px
+    padding-top:2px;
+    margin-top:1px
 }
 
 :global(.loading .bx--progress-bar__bar) {
