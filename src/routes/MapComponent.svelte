@@ -44,6 +44,7 @@
     antialias: true,
   }));
 
+  map.doubleClickZoom.disable();
   map.on('load', function () {
 
 

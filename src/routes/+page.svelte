@@ -155,7 +155,7 @@ newpaint(colour);
       if (update) legend.classList.add('loading')
     })
 
-    map.on('click', 'poly-layer', function (e) {
+    map.on('dblclick', 'poly-layer', function (e) {
       keycentre = e.lngLat.toArray();
       if (map.getZoom()<12) map.setZoom(12)
 
