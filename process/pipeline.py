@@ -71,7 +71,7 @@ if __name__ == '__main__':
     '''
     # updated output location 
     oloc = OUTPUTLOC+typen
-    os.system(f'mkdir {oloc}')
+    os.mkdir(oloc, exist_ok=True))
 
     ''' Lets  load all relevant data '''
 
@@ -171,8 +171,11 @@ if __name__ == '__main__':
 
         
         
+
         gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
-        os.system(f'echo "*.pkl" >> {oloc}/.gitignore')
+        with open(f'{oloc}/.gitignore','a') as f:
+            f.write('\n *.pkl')
+
         print(f'saved {typen} pkl')
 
         
@@ -205,7 +208,7 @@ if __name__ == '__main__':
 
     
         vt = vector_tile_base.VectorTile()
-        layer = vt.add_layer('custom_data_dan')#,x=x,y=y,zoom=z,version=3)
+        layer = vt.add_layer('custom_data_dan')
         layer.EXTENT=EXTENT
 
         # by = 13-int(z)
@@ -241,8 +244,9 @@ if __name__ == '__main__':
             with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
                 f.write(encoded_tile)
         except:
-            os.popen(f'mkdir {output}/{z}  >/dev/null 2>&1').read()
-            os.popen(f'mkdir {output}/{z}/{x}  >/dev/null 2>&1').read()
+
+            os.mkdir(f'{output}/{z}', exist_ok=True)
+            os.mkdir(f'{output}/{z}/{x}', exist_ok=True)
             with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
                 f.write(encoded_tile)
                 # print('oloc',f'{output}/{z}/{x}/{y}.pbf')
@@ -271,8 +275,15 @@ if __name__ == '__main__':
         geom = gpd.GeoDataFrame(geom)
         geom['ratios'] = [str(list(data.loc[i].values)).replace(' ','') for i in geom.index]
         geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
-        os.system(f'echo "*.geojson" >> {oloc}/.gitignore')
 
+
+
+        
+        # os.system(f'echo "*.geojson" >> {oloc}/.gitignore')
+        with open(f'{oloc}/.gitignore','a') as f:
+            f.write('\n *.geojson')
+
+        # #### MAY NOT WORK ON WINDOWS
         os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson')
 
     del geom
@@ -292,7 +303,6 @@ if __name__ == '__main__':
     # bounds = (-0.488892,51.280817,0.189514,51.699800)
     
     print(' Not deleting previous computations. You may wish to do this manually. ')
-    # os.system(f'rm -rf {oloc}/')
 
     # 7 - 10  and 10 - 14
     # split due to RAM memory limit when using a MBP 
@@ -334,7 +344,7 @@ if __name__ == '__main__':
     print(typen)
 
 
-
+    # ##### MAY NOT WORK ON WINDOWS
     if os.path.exists(f'{oloc}/.git/'):
         os.system(f'cd {oloc}; git add -A; git commit -m "update"; git push && echo "saved {typen}" ')
     else:
