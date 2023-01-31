@@ -1,6 +1,6 @@
 *.geojson
-
 *.so
+/.svelte-kit
 
 
 # Logs
