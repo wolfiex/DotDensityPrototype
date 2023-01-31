@@ -1,7 +1,5 @@
 *.geojson
 
-node_modules/
-/.svelte-kit/
 *.so
 
 
