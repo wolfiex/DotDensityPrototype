@@ -40,7 +40,7 @@ HALF_EXTENT = EXTENT/2
 HALF_BUFFER = 2./14. * HALF_EXTENT
 NCPUS = cpu_count()
 
-DLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/2021-oa-data/'' # data location
+DLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/2021-oa-data/' # data location
 GEOMLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/geom.shp'
 OUTPUTLOC = '/Users/danielellis/ONSVis/'
 
