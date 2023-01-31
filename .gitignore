@@ -1,5 +1,9 @@
 *.geojson
 
+node_modules/
+.svelte-kit/
+
+
 
 # Logs
 logs
