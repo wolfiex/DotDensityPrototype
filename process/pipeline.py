@@ -2,7 +2,10 @@
 Dependancies: 
     pip install pandas numpy geopandas mercantile p_tqdm vector_tile_base
 
+Purpose: 
+    A processing script for OA level census data to dot-density    
 
+Author: Daniel Elis 
 '''
 
 # import multiprocess.context as ctx
@@ -19,6 +22,8 @@ import pandas as pd
 import geopandas as gpd
 import mercantile, vector_tile_base
 
+
+#  this uses / compiles the fortran libraries. If the code falls over here delete the .so files and rerun. 
 try:
     from customtiles import * 
 except:    
@@ -29,21 +34,25 @@ except:
 '''
 Constants for processing 
 '''
+
 EXTENT = 4096
 HALF_EXTENT = EXTENT/2 
 HALF_BUFFER = 2./14. * HALF_EXTENT
+NCPUS = cpu_count()
+
 DLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/2021-oa-data/'' # data location
 GEOMLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/geom.shp'
-NCPUS = cpu_count()
+OUTPUTLOC = '/Users/danielellis/ONSVis/'
+
+
+
 
 
 if __name__ == '__main__':
 
-
-
-
-
-    # selector
+    '''
+    # dataset selection code
+    '''
     typen = glob.glob(DLOC+'/TS*.csv')
     for i in enumerate(typen):
         print(i)
@@ -55,11 +64,13 @@ if __name__ == '__main__':
     os.system('date')
 
 
+
+
     '''
     The full generation cycle for a single dataset. 
     '''
-    # output locaiton 
-    oloc = '/Users/danielellis/ONSVis/'+typen
+    # output location 
+    oloc = OUTPUTLOC+typen
     os.system(f'mkdir {oloc}')
 
     ''' Lets  load all relevant data '''
