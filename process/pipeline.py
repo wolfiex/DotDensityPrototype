@@ -1,3 +1,10 @@
+'''
+Dependancies: 
+    pip install pandas numpy geopandas mercantile p_tqdm vector_tile_base
+
+
+'''
+
 
 # import multiprocess.context as ctx
 # ctx._force_start_method('spawn')
