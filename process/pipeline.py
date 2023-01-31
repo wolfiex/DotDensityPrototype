@@ -13,9 +13,9 @@ Author: Daniel Elis
 from multiprocessing import cpu_count
 from p_tqdm import p_uimap,p_umap
 from functools import partial
-sys.setrecursionlimit(2500)
 
 import os, sys, glob
+sys.setrecursionlimit(2500)
 
 import numpy as np
 import pandas as pd
