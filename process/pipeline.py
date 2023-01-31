@@ -5,21 +5,19 @@ Dependancies:
 
 '''
 
-
 # import multiprocess.context as ctx
 # ctx._force_start_method('spawn')
-import os, sys
+from multiprocessing import cpu_count
+from p_tqdm import p_uimap,p_umap
+from functools import partial
 sys.setrecursionlimit(2500)
+
+import os, sys, glob
+
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-# from shapely.geometry import Point,box
-from multiprocessing import cpu_count
-from p_tqdm import p_uimap,p_umap
-import mercantile
-from functools import partial
-import vector_tile_base
-from multiprocessing import Pool
+import mercantile, vector_tile_base
 
 try:
     from customtiles import * 
@@ -29,27 +27,24 @@ except:
 
 
 '''
-Constants
+Constants for processing 
 '''
 EXTENT = 4096
 HALF_EXTENT = EXTENT/2 
 HALF_BUFFER = 2./14. * HALF_EXTENT
-DLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/' # data location
+DLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/2021-oa-data/'' # data location
+GEOMLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/geom.shp'
 NCPUS = cpu_count()
 
 
 if __name__ == '__main__':
-    '''
-    BATCH RUN BATCH RUN BATCH RUN
-    https://pythonspeed.com/articles/python-multiprocessing/
-    '''
 
-    import glob,sys
+
 
 
 
     # selector
-    typen = glob.glob(DLOC+'2021-oa-data/TS*.csv')
+    typen = glob.glob(DLOC+'/TS*.csv')
     for i in enumerate(typen):
         print(i)
 
@@ -69,10 +64,10 @@ if __name__ == '__main__':
 
     ''' Lets  load all relevant data '''
 
-    geom = gpd.read_file(DLOC+'geom.shp').set_index('OA21CD')
+    geom = gpd.read_file(GEOMLOC).set_index('OA21CD')
     geom = geom.geometry
 
-    data = pd.read_csv(DLOC+'2021-oa-data/'+typen+'.csv').set_index('Geography code')
+    data = pd.read_csv(DLOC+typen+'.csv').set_index('Geography code')
 
 
     # automatically select the sections with data in them. 
