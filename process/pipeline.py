@@ -50,9 +50,9 @@ OUTPUTLOC = '/Users/danielellis/ONSVis/'
 
 if __name__ == '__main__':
 
-    '''
-    # dataset selection code
-    '''
+    #############################
+    # DatasetSelection UI
+    #############################
     typen = glob.glob(DLOC+'/TS*.csv')
     for i in enumerate(typen):
         print(i)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
 
     '''
-    The full generation cycle for a single dataset. 
+    The full generation cycle for a single dataset is given below. 
     '''
     # output location 
     oloc = OUTPUTLOC+typen
