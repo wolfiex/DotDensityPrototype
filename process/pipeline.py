@@ -46,7 +46,9 @@ GEOMLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/geom.shp'
 OUTPUTLOC = '/Users/danielellis/ONSVis/'
 
 
-
+def mkdir(loc):
+    try: os.mkdir(loc)
+    except:...
 
 
 if __name__ == '__main__':
@@ -72,7 +74,8 @@ if __name__ == '__main__':
     '''
     # updated output location 
     oloc = OUTPUTLOC+typen
-    os.mkdir(oloc, exist_ok=True))
+    mkdir(oloc)
+
 
     ''' Lets  load all relevant data '''
 
@@ -240,27 +243,23 @@ if __name__ == '__main__':
         del vt, _, multipoint,cat
         output = oloc
 
-        print('oloc')
         try:
             with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
                 f.write(encoded_tile)
         except:
 
-            os.mkdir(f'{output}/{z}', exist_ok=True)
-            os.mkdir(f'{output}/{z}/{x}', exist_ok=True)
+            mkdir(f'{output}/{z}')
+            mkdir(f'{output}/{z}/{x}')
             with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
                 f.write(encoded_tile)
-                # print('oloc',f'{output}/{z}/{x}/{y}.pbf')
         
         del encoded_tile
         # nested
         if z+1 < stop and len(subset) : 
             
             tiles = mercantile.tiles(*bbox, zooms=[z+1])
-            # print('nest',z+1)
             for t in tiles:
                 # recursive processing
-                # print(t)
                 gunwale_bobbing(t,subset,stop)
             del subset
         
@@ -307,7 +306,7 @@ if __name__ == '__main__':
 
     # 7 - 10  and 10 - 14
     # split due to RAM memory limit when using a MBP 
-    startstop = [[7,9],[10,11],[11,12],[12,14]]
+    startstop = [[7,9],[9,11],[11,12],[12,14]]
 
     # startstop=[]
 
