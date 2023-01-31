@@ -69,7 +69,7 @@ if __name__ == '__main__':
     '''
     The full generation cycle for a single dataset is given below. 
     '''
-    # output location 
+    # updated output location 
     oloc = OUTPUTLOC+typen
     os.system(f'mkdir {oloc}')
 
