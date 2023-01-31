@@ -1,6 +1,7 @@
 '''
 Dependancies: 
-    pip install pandas numpy geopandas mercantile p_tqdm vector_tile_base
+    pip install pandas numpy geopandas mercantile p_tqdm 
+    pip install git+https://github.com/mapbox/vector-tile-base
 
 Purpose: 
     A processing script for OA level census data to dot-density    
