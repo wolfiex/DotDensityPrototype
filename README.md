@@ -35,6 +35,8 @@ In the case of unstable computation, a break in the SSH connection can result in
 This attaches to the 'compute' screen. We can view all screen instances with `screen -ls`.
 
 
+* To scroll press ctrl+A , and use the arrow keys. Hit ESC when finished. *
+
 ### Starting processing of a single file
 1. To attach to a compte session we naviage to the processing repo:
 `cd DotDensityPrototype/process` 

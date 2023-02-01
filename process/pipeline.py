@@ -226,9 +226,6 @@ if __name__ == '__main__':
 
         spinner.stop()
 
-        
-    # gdf = gdf[gdf.point != []]
-    print(gdf)
 
 
 
@@ -317,11 +314,14 @@ if __name__ == '__main__':
 
 
     if TIPPIECANOE:
-        spin('Saving Ratios File')
+
+        spin('Saving Ratios GeoJSON')
+
         geom = gpd.GeoDataFrame(geom)
         geom['ratios'] = [str(list(data.loc[i].values)).replace(' ','') for i in geom.index]
 
-        geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
+        if not os.path.exists(oloc+'/ratio.geojson'):
+            geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
 
         spinner.text = 'Tippicanoe'
         # #### MAY NOT WORK ON WINDOWS
