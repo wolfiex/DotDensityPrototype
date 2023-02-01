@@ -3,7 +3,10 @@ all: splash pull
 	make install -j
 
 splash:
-	sudo stty size | awk '{system("cut -c1-" $2 " splash.txt")}'
+	# stty size | awk '{print $2}'
+	# tput cols | awk '{system("cut -c1-"  $2 " splash.txt")}'
+	# cut -c1-$(tput cols) splash.txt
+	cut -c1-80 splash.txt
 
 pull:
 	git pull
@@ -19,7 +22,7 @@ install:
 	# sudo pkill -9 apt 
 	# python 
 	sudo apt install python3-pip --yes 
-	pip install pandas numpy geopandas mercantile p_tqdm
+	pip install pandas numpy geopandas mercantile p_tqdm halo
 	pip install protobuf==3.20.*
 	pip install git+https://github.com/mapbox/vector-tile-base 
 
@@ -30,7 +33,7 @@ install:
 	# tippiecanoe
 	sudo apt-get install build-essential libsqlite3-dev zlib1g-dev --yes
 	git clone https://github.com/mapbox/tippecanoe.git 
-	cd tippecanoe && make -j && make install && cd ../ && rm -rf tippecanoe
+	cd tippecanoe && make -j && sudo make install && cd ../ && rm -rf ../tippecanoe
 
 	sudo apt-get install htop --yes
 

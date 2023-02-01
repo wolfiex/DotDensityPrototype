@@ -21,6 +21,11 @@ Purpose:
 
 Author: Daniel Elis 
 '''
+import os, sys, glob
+from halo import Halo
+sys.setrecursionlimit(2500)
+w = os.popen('tput cols').read()
+os.system(f'cut -c1-{w} splash.txt')
 
 # import multiprocess.context as ctx
 # ctx._force_start_method('spawn')
@@ -28,21 +33,29 @@ from multiprocessing import cpu_count
 from p_tqdm import p_uimap,p_umap
 from functools import partial
 
-import os, sys, glob
-sys.setrecursionlimit(2500)
-
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 import mercantile, vector_tile_base
 
 
-#  this uses / compiles the fortran libraries. If the code falls over here delete the .so files and rerun. 
+spinner = Halo(text='', spinner='dots')
+def spin(text):
+    global spinner
+    spinner.text = text
+    spinner.start()
+
+
+spin('Compiling Fortran')
+
+'''this uses / compiles the fortran libraries. If the code falls over here delete the .so files and rerun. '''
 try:
     from customtiles import * 
 except:    
     os.popen('python3 -m numpy.f2py -c tilefunctions.f90 -m customtiles').read()
     from customtiles import * 
+
+spinner.stop()
 
 
 '''
@@ -54,28 +67,41 @@ HALF_EXTENT = EXTENT/2
 HALF_BUFFER = 2./14. * HALF_EXTENT
 NCPUS = cpu_count()
 SKIP_SAVE = True
-GZIP = 
+TIPPIECANOE = True
+# GZIP = 
 
-DLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/2021-oa-data/' # data location
-GEOMLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/geom.shp'
-OUTPUTLOC = '/Users/danielellis/ONSVis/'
+DLOC = '~/Inputs/data/' # data location
+GEOMLOC = '~/Inputs/geom.shp'
+OUTPUTLOC = '~/ProcessedFiles'
 
 
 def mkdir(loc):
     try: os.mkdir(loc)
     except:...
 
+mkdir(OUTPUTLOC)
 
 if __name__ == '__main__':
+
 
     #############################
     # DatasetSelection UI
     #############################
-    typen = glob.glob(DLOC+'/TS*.csv')
-    for i in enumerate(typen):
-        print(i)
+    '''
+    This section has two possible input styles. 
+    1. You can provide a file as an argument:
+        python pipeline.py path/to/file.csv
+    2. Select from the Dropdown Menu
+    '''
+    try: 
+        typen = sys.argv[1]
+        assert os.path.exists(typen) 'File does not exist'
+    except:
+        typen = glob.glob(DLOC+'/TS*.csv')
+        for i in enumerate(typen):
+            print(i)
 
-    typen = typen[int(input('Select Value: '))]
+        typen = typen[int(input('Select Value: '))]
 
     typen = typen.split('/')[-1].split('.')[0]
     print(typen)
@@ -93,13 +119,13 @@ if __name__ == '__main__':
 
 
     ''' Lets  load all relevant data '''
-
+    spin(f'Reading geometry')
     geom = gpd.read_file(GEOMLOC).set_index('OA21CD')
     geom = geom.geometry
 
+    spinner.text(f'Reading {typen}')
     data = pd.read_csv(DLOC+typen+'.csv').set_index('Geography code')
-
-
+    
     # automatically select the sections with data in them. 
     start = list(data.columns).index('Classification') + 1
     end = list(data.columns).index('Total')
@@ -110,6 +136,7 @@ if __name__ == '__main__':
     oas = list(set(data.index) & set(geom.index))
     np.random.shuffle(oas)
 
+    spinner.stop()
 
 
     #############################
@@ -171,7 +198,9 @@ if __name__ == '__main__':
 
 
     try:
+        spin('Loading pre-computed points')
         gdf = pd.read_pickle(f'{oloc}/points.pkl')
+        spinner.stop()
     except:
 
         split = np.array_split(oas,NCPUS)#80
@@ -182,21 +211,18 @@ if __name__ == '__main__':
         for l in iterator:
             res.extend(l)
 
+        spin('Saving computed points. ')
         gdf = pd.DataFrame(np.array(res,dtype=object))
         gdf.columns = 'cat point x y'.split()
         gdf = gdf.sort_values('x y'.split())
 
-
-
-        
-        
 
         if not SKIPSAVE: gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
 
         with open(f'{oloc}/.gitignore','a') as f:
             f.write('\n *.pkl')
 
-        print(f'saved {typen} pkl')
+        spinner.stop()
 
         
     # gdf = gdf[gdf.point != []]
@@ -214,7 +240,6 @@ if __name__ == '__main__':
         '''        
         
         if not len(data): data = gdf.loc[:]
-        # print(schema,stop,data.shape)
 
         x,y,z = schema
         if z == stop: return 0 #secondary failsafe
@@ -286,22 +311,21 @@ if __name__ == '__main__':
     ##########################
 
 
-    if not os.path.exists(f'{oloc}/ratios/'):
-
+    if TIPPIECANOE:
+        spin('Saving Ratios File')
         geom = gpd.GeoDataFrame(geom)
         geom['ratios'] = [str(list(data.loc[i].values)).replace(' ','') for i in geom.index]
 
-        if not SKIPSAVE:
-            geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
-                    # #### MAY NOT WORK ON WINDOWS
-            os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson').read()
+        geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
 
-
-
+        spinner.text('Tippicanoe')
+        # #### MAY NOT WORK ON WINDOWS
+        os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson').read()
         
         # os.system(f'echo "*.geojson" >> {oloc}/.gitignore')
         with open(f'{oloc}/.gitignore','a') as f:
             f.write('\n *.geojson')
+        spinner.stop()
 
 
 
@@ -325,10 +349,9 @@ if __name__ == '__main__':
 
     # 7 - 10  and 10 - 14
     # split due to RAM memory limit when using a MBP 
-    startstop = [[7,9],[9,11],[11,14]]
+    startstop = [[7,10],[10,14]]
 
     # startstop=[]
-
 
     for b,e in startstop:
         print(f'Processing layers {b} - {e}')
@@ -343,7 +366,6 @@ if __name__ == '__main__':
     ##########################
     # gen switch code
     ##########################
-
 
     s = data.sum()
     s = 100*(s/s.max())
