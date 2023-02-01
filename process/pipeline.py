@@ -206,7 +206,7 @@ if __name__ == '__main__':
         spinner.text = 'Calculating points'
         spinner.stop()
         split = np.array_split(oas,NCPUS)#80
-        print(len(split[0]))
+        print(len(split[0]),'per core. (',NCPUS,' cores.)')
 
         res = []
         iterator = p_uimap(makepoints,split)
