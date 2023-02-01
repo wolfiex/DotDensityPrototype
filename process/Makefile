@@ -3,7 +3,7 @@ all: splash pull
 	make install -j
 
 splash:
-	stty size | awk '{system("cut -c1-" $2 " splash.txt")}' 
+	@echo stty size | awk '{system("cut -c1-" $2 " splash.txt")}' 
 
 pull:
 	git pull
