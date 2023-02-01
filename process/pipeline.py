@@ -39,9 +39,9 @@ SKIP_SAVE = True
 TIPPIECANOE = True
 GZIP = False 
 
-DLOC = '~/Inputs/data/' # data location
-GEOMLOC = '~/Inputs/geom.shp'
-OUTPUTLOC = '~/ProcessedFiles'
+DLOC = '../../Inputs/data/' # data location
+GEOMLOC = '../../Inputs/geom.shp'
+OUTPUTLOC = '../../ProcessedFiles'
 
 
 '''
@@ -97,6 +97,7 @@ if __name__ == '__main__':
         assert os.path.exists(typen), 'File does not exist'
     except:
         typen = glob.glob(DLOC+'TS*.csv')
+
         assert len(typen), 'No files found, check your path: '+DLOC
         for i in enumerate(typen):
             print(i)
