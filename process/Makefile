@@ -1,3 +1,5 @@
+DATASETS="../../Inputs/data/TS*.csv"
+
 all: splash pull 
 	@echo ''
 	make install -j
@@ -16,6 +18,12 @@ push:
 
 single: 
 	python3 pipeline.py
+
+batch:
+	for data in $DATASETS
+	do
+	echo "$data"
+	done
 
 pipeline:
 	@echo "Creating empty text files..."

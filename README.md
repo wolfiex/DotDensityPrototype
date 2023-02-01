@@ -57,6 +57,16 @@ To do this:
 Now we should be attached to the same screen we were previously. 
 
 
+### BATCH processing of multiple datasets
+1. To attach to a compte session we naviage to the processing repo:
+`cd DotDensityPrototype/process` 
+2. We then type `make compute`
+3. Check the data location in line 1 of the Makefile (`DATASETS="../../Inputs/data/TS*.csv"`)
+4. Type `make batch`. This exececutes the processing python script. 
+5. Close the terminal and go for lunch. 
+6. After some undiscriminate amount of time see "Viewing status after our session has accidentally detached." to reconnect and check the status. 
+
+
 
 
 
