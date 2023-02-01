@@ -14,7 +14,7 @@ pull:
 push:
 	git add -A && git commit -m 'makefile' && git push 
 
-single:
+single: view
 	screen -D -R compute -m 'pkill -9 python; python3 pipeline.py'
 	make view
 
@@ -45,8 +45,12 @@ install:
 	sudo apt-get install htop --yes
 	sudo apt install screen --yes
 
-view:
-	screen -r compute
+
+
+
+
+compute:
+	screen -RD compute
 
 kill:
 	screen -R -D compute -X quit
