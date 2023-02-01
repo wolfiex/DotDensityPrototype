@@ -96,7 +96,7 @@ if __name__ == '__main__':
         typen = sys.argv[1]
         assert os.path.exists(typen), 'File does not exist'
     except:
-        typen = glob.glob(DLOC+'/TS*.csv')
+        typen = glob.glob(DLOC+'TS*.csv')
         assert len(typen), 'No files found, check your path: '+DLOC
         for i in enumerate(typen):
             print(i)
