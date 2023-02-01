@@ -57,6 +57,14 @@ Now we should be attached to the same screen we were previously.
 
 
 
+
+
+### Viewing system load and resources
+To view the system resources: 
+1. Open a new terminal tab
+2. Log into the instance: `ssh -i "./path_to_your_key.pem" ubuntu@ec2-xx-xxx-xx-x.eu-west-2.compute.amazonaws.com`
+3. type `htop`
+
 ## Visualising the prototype
 
 Can be done using netlify or locally. 
