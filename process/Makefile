@@ -1,5 +1,5 @@
 all: pull 
-	make install
+	make install -j
 
 say_hello:
 	@echo "Hello World"
