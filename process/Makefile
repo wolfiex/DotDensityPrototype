@@ -6,7 +6,7 @@ splash:
 	# stty size | awk '{print $2}'
 	# tput cols | awk '{system("cut -c1-"  $2 " splash.txt")}'
 	# cut -c1-$(tput cols) splash.txt
-	cut -c1-80 splash.txt
+	cut -c1-100 splash.txt
 
 pull:
 	git pull
@@ -14,7 +14,10 @@ pull:
 push:
 	git add -A && git commit -m 'makefile' && git push 
 
-generate:
+single:
+	python3 pipeline.py
+
+pipeline:
 	@echo "Creating empty text files..."
 	
 install:

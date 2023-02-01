@@ -39,6 +39,27 @@ import geopandas as gpd
 import mercantile, vector_tile_base
 
 
+'''
+Constants!!!!!!!!!!!!!!!!!!!!!!
+'''
+
+EXTENT = 4096
+HALF_EXTENT = EXTENT/2 
+HALF_BUFFER = 2./14. * HALF_EXTENT
+NCPUS = cpu_count()
+SKIP_SAVE = True
+TIPPIECANOE = True
+# GZIP = 
+
+DLOC = '~/Inputs/data/' # data location
+GEOMLOC = '~/Inputs/geom.shp'
+OUTPUTLOC = '~/ProcessedFiles'
+
+
+'''
+Common Functions
+'''
+
 spinner = Halo(text='', spinner='dots')
 def spin(text):
     global spinner
@@ -56,23 +77,6 @@ except:
     from customtiles import * 
 
 spinner.stop()
-
-
-'''
-Constants for processing 
-'''
-
-EXTENT = 4096
-HALF_EXTENT = EXTENT/2 
-HALF_BUFFER = 2./14. * HALF_EXTENT
-NCPUS = cpu_count()
-SKIP_SAVE = True
-TIPPIECANOE = True
-# GZIP = 
-
-DLOC = '~/Inputs/data/' # data location
-GEOMLOC = '~/Inputs/geom.shp'
-OUTPUTLOC = '~/ProcessedFiles'
 
 
 def mkdir(loc):
@@ -95,7 +99,7 @@ if __name__ == '__main__':
     '''
     try: 
         typen = sys.argv[1]
-        assert os.path.exists(typen) 'File does not exist'
+        assert os.path.exists(typen), 'File does not exist'
     except:
         typen = glob.glob(DLOC+'/TS*.csv')
         for i in enumerate(typen):
