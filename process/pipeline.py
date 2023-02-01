@@ -7,7 +7,7 @@ Purpose:
 
 Author: Daniel Elis 
 '''
-import os, sys, glob, gzip
+import os, sys, glob, gzip, time
 from halo import Halo
 sys.setrecursionlimit(2500)
 w = os.get_terminal_size().columns
@@ -35,7 +35,7 @@ EXTENT = 4096
 HALF_EXTENT = EXTENT/2 
 HALF_BUFFER = 2./14. * HALF_EXTENT
 NCPUS = cpu_count()
-SKIP_SAVE = True
+SKIP_SAVE = False
 TIPPIECANOE = True
 GZIP = False 
 
@@ -82,7 +82,7 @@ mkdir(OUTPUTLOC)
 
 if __name__ == '__main__':
 
-
+    start = time.time()
     #############################
     # DatasetSelection UI
     #############################
@@ -406,13 +406,7 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
-
-
-
+    print('\n\n Execition took %.02f minutes \n\n'%(time.time()-start)/60)
 
     print(options)
 
