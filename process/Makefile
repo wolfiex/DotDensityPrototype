@@ -23,7 +23,7 @@ install:
 	pip install git+https://github.com/mapbox/vector-tile-base 
 
 	# if f2py compiler is missing 
-	sudo apt-get install fortran --yes 
+	sudo apt-get install gfortran --yes 
 	python3 -m numpy.f2py -c tilefunctions.f90 -m customtiles 
 
 	# tippiecanoe
