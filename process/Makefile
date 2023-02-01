@@ -1,9 +1,9 @@
-all: pull 
+all: splash pull 
 	@echo ''
 	make install -j
 
-say_hello:
-	@echo "Hello World"
+splash:
+	stty size | awk '{system("cut -c1-" $2 " splash.txt")}' 
 
 pull:
 	git pull
