@@ -20,7 +20,7 @@ single:
 	python3 pipeline.py
 
 batch:
-	for ${data} in ${DATASETS}; do echo "- ${data}" ; done
+	for data in ${DATASETS}; do echo "- $${data}" ; done
 
 pipeline:
 	@echo "Creating empty text files..."
