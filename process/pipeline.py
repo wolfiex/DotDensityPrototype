@@ -70,14 +70,12 @@ def spin(text):
 
 
 spin('Compiling Fortran')
-
 '''this uses / compiles the fortran libraries. If the code falls over here delete the .so files and rerun. '''
 try:
     from customtiles import * 
 except:    
     os.popen('python3 -m numpy.f2py -c tilefunctions.f90 -m customtiles').read()
     from customtiles import * 
-
 spinner.stop()
 
 
@@ -104,6 +102,7 @@ if __name__ == '__main__':
         assert os.path.exists(typen), 'File does not exist'
     except:
         typen = glob.glob(DLOC+'/TS*.csv')
+        assert len(typen), 'No files found, check your path: '+DLOC
         for i in enumerate(typen):
             print(i)
 
