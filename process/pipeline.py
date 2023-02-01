@@ -219,7 +219,7 @@ if __name__ == '__main__':
         gdf = gdf.sort_values('x y'.split())
 
 
-        if not SKIPSAVE: gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
+        if not SKIP_SAVE: gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
 
         with open(f'{oloc}/.gitignore','a') as f:
             f.write('\n *.pkl')
