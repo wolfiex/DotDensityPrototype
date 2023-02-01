@@ -14,7 +14,7 @@ pull:
 push:
 	git add -A && git commit -m 'makefile' && git push 
 
-single: kill
+single:
 	screen -D -R -S compute -m 'pkill -9 python; python3 pipeline.py'
 	make view
 
