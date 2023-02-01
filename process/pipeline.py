@@ -323,7 +323,7 @@ if __name__ == '__main__':
 
         geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
 
-        spinner.text('Tippicanoe')
+        spinner.text = 'Tippicanoe'
         # #### MAY NOT WORK ON WINDOWS
         os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson').read()
         
