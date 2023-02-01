@@ -23,6 +23,8 @@ pipeline:
 install:
 	@echo "Installing dependancies"
 	# sudo pkill -9 apt 
+	sudo apt update
+	
 	# python 
 	sudo apt install python3-pip --yes 
 	pip install pandas numpy geopandas mercantile p_tqdm halo
@@ -35,8 +37,9 @@ install:
 
 	# tippiecanoe
 	sudo apt-get install build-essential libsqlite3-dev zlib1g-dev --yes
+	mkdir tippecanoe; rm -rf tippecanoe
 	git clone https://github.com/mapbox/tippecanoe.git 
 	cd tippecanoe && make -j && sudo make install && cd ../ && rm -rf ../tippecanoe
 
 	sudo apt-get install htop --yes
-
+	sudo apt install screen --yes

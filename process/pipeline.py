@@ -203,7 +203,8 @@ if __name__ == '__main__':
         gdf = pd.read_pickle(f'{oloc}/points.pkl')
         spinner.stop()
     except:
-
+        spinner.text = 'Calculating points'
+        spinner.stop()
         split = np.array_split(oas,NCPUS)#80
         print(len(split[0]))
 
