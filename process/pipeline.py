@@ -24,8 +24,7 @@ Author: Daniel Elis
 import os, sys, glob
 from halo import Halo
 sys.setrecursionlimit(2500)
-w = 11
-# os.popen('tput cols').read()
+w = os.get_terminal_size().columns
 os.system(f'cut -c1-{w} splash.txt')
 
 spinner = Halo(text='Loading libraries', spinner='dots')
