@@ -325,7 +325,7 @@ if __name__ == '__main__':
 
         spinner.text = 'Tippicanoe'
         # #### MAY NOT WORK ON WINDOWS
-        os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson').read()
+        os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson')
         
         # os.system(f'echo "*.geojson" >> {oloc}/.gitignore')
         with open(f'{oloc}/.gitignore','a') as f:
