@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
     ''' Lets  load all relevant data '''
     spin(f'Reading geometry')
-    geom = gpd.read_file(GEOMLOC).set_index('OA21CD')
+    geom = gpd.read_file(GEOMLOC,engine='pyogrio').set_index('OA21CD')
     geom = geom.geometry
 
     spin(f'Reading {typen}')
@@ -354,7 +354,7 @@ if __name__ == '__main__':
 
     # 7 - 10  and 10 - 14
     # split due to RAM memory limit when using a MBP 
-    startstop = [[7,10],[10,14]]
+    startstop = [[7,11],[11,12],[12,14]]
 
     # startstop=[]
 
@@ -389,20 +389,6 @@ if __name__ == '__main__':
 
     print(typen)
 
-
-    # # ##### MAY NOT WORK ON WINDOWS
-    # if os.path.exists(f'{oloc}/.git/'):
-    #     os.system(f'cd {oloc}; git add -A; git commit -m "update"; git push && echo "saved {typen}" ')
-    # else:
-    #     cmd = f'''git init;
-    #     git add -A;
-    #     git commit -m "first commit";
-    #     git branch -M main;
-    #     git remote add origin https://github.com/ONSvisual/{typen}.git;
-    #     # git push -u origin main;
-    #     git push --set-upstream origin main
-    #     '''
-    #     os.system(cmd)
 
 
 
