@@ -36,7 +36,7 @@ HALF_EXTENT = EXTENT/2
 HALF_BUFFER = 2./14. * HALF_EXTENT
 NCPUS = cpu_count()
 SKIP_SAVE = False
-TIPPIECANOE = True
+TIPPIECANOE = False
 GZIP = False 
 
 DLOC = '../../Inputs/data/' # data location
@@ -354,7 +354,7 @@ if __name__ == '__main__':
 
     # 7 - 10  and 10 - 14
     # split due to RAM memory limit when using a MBP 
-    startstop = [[7,11],[11,12],[12,14]]
+    startstop = [[7,11],[11,12],[12,13],[13,14]]
 
     # startstop=[]
 
