@@ -1,38 +1,35 @@
-# create-svelte
+# Dot Density Data - EC2 instance instructions. 
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+## Preperation 
+### Setting up keyless login
+1. Download your relevant `.pem` encryption file
+2. Move this to the folder you will be sshing into the instance from. 
+3. Set the permissions to owner read only with `chmod 4000 <your file>.pem`
+4. Run the ssh command. (e.g. ssh -i "./path_to_your_key.pem" ubuntu@ec2-xx-xxx-xx-x.eu-west-2.compute.amazonaws.com)
+### Transferring the Data to instance 
 
-## Creating a project
+1. On your machine, navigate to the *parent* of your data folder. 
+- the current format is an `Inputs` folder containing the OA `geom` shapefiles and a `data` folder containing the 'TSxxx.csv' files. 
+2. `scp -i "~/<file>.pem" -r ./Inputs/ ubuntu@ec2-<xx-xxx-xx>.eu-west-2.compute.amazonaws.com:~/`
 
-If you're seeing this, you've probably already done this step. Congrats!
+### Cloning the repository 
+1. Log into the instance: `ssh -i "./path_to_your_key.pem" ubuntu@ec2-xx-xxx-xx-x.eu-west-2.compute.amazonaws.com`
+2. `cd ; git clone https://github.com/ONSvisual/DotDensityPrototype.git`
+3. Navigate to the processing repo:
+`cd DotDensityPrototype/process`
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+### Installing dependancies
+sudo apt install make
 
-## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-```bash
-npm run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
 
-## Building
 
-To create a production version of your app:
 
-```bash
-npm run build
-```
+## Visualising the prototype
 
-You can preview the production build with `npm run preview`.
+Can be done using netlify or locally. 
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+- Remember to run `npm run dev` or `npm build` as required. 

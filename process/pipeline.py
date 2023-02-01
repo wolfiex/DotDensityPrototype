@@ -1,7 +1,20 @@
 '''
 Dependancies: 
+
+    # python 
+    sudo apt install python3-pip
     pip install pandas numpy geopandas mercantile p_tqdm 
+    pip install protobuf==3.20.*
     pip install git+https://github.com/mapbox/vector-tile-base
+
+    # if f2py compiler is missing 
+    sudo apt-get install fortran
+
+    # tippiecanoe
+    git clone https://github.com/mapbox/tippecanoe.git
+    cd tippecanoe
+    make -j
+    make install
 
 Purpose: 
     A processing script for OA level census data to dot-density    
@@ -28,7 +41,7 @@ import mercantile, vector_tile_base
 try:
     from customtiles import * 
 except:    
-    os.popen('f2py -c tilefunctions.f90 -m customtiles').read()
+    os.popen('python3 -m numpy.f2py -c tilefunctions.f90 -m customtiles').read()
     from customtiles import * 
 
 
@@ -40,6 +53,8 @@ EXTENT = 4096
 HALF_EXTENT = EXTENT/2 
 HALF_BUFFER = 2./14. * HALF_EXTENT
 NCPUS = cpu_count()
+SKIP_SAVE = True
+GZIP = 
 
 DLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/2021-oa-data/' # data location
 GEOMLOC = '/Users/danielellis/ONSVis/DotDensityTiles/processing/geom.shp'
@@ -176,7 +191,8 @@ if __name__ == '__main__':
         
         
 
-        gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
+        if not SKIPSAVE: gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
+
         with open(f'{oloc}/.gitignore','a') as f:
             f.write('\n *.pkl')
 
@@ -274,7 +290,11 @@ if __name__ == '__main__':
 
         geom = gpd.GeoDataFrame(geom)
         geom['ratios'] = [str(list(data.loc[i].values)).replace(' ','') for i in geom.index]
-        geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
+
+        if not SKIPSAVE:
+            geom.to_file(oloc+'/ratio.geojson', driver="GeoJSON")  
+                    # #### MAY NOT WORK ON WINDOWS
+            os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson').read()
 
 
 
@@ -283,8 +303,7 @@ if __name__ == '__main__':
         with open(f'{oloc}/.gitignore','a') as f:
             f.write('\n *.geojson')
 
-        # #### MAY NOT WORK ON WINDOWS
-        os.system(f'cd {oloc};rm -rf ratios; mkdir ratios/;  tippecanoe -zg --no-tile-compression --simplification=10 --simplify-only-low-zooms --no-tile-size-limit --force --read-parallel --output-to-directory=ratios/ ratio.geojson')
+
 
     del geom
 
@@ -306,7 +325,7 @@ if __name__ == '__main__':
 
     # 7 - 10  and 10 - 14
     # split due to RAM memory limit when using a MBP 
-    startstop = [[7,9],[9,11],[11,12],[12,14]]
+    startstop = [[7,9],[9,11],[11,14]]
 
     # startstop=[]
 
@@ -344,19 +363,23 @@ if __name__ == '__main__':
     print(typen)
 
 
-    # ##### MAY NOT WORK ON WINDOWS
-    if os.path.exists(f'{oloc}/.git/'):
-        os.system(f'cd {oloc}; git add -A; git commit -m "update"; git push && echo "saved {typen}" ')
-    else:
-        cmd = f'''git init;
-        git add -A;
-        git commit -m "first commit";
-        git branch -M main;
-        git remote add origin https://github.com/ONSvisual/{typen}.git;
-        # git push -u origin main;
-        git push --set-upstream origin main
-        '''
-        os.system(cmd)
+    # # ##### MAY NOT WORK ON WINDOWS
+    # if os.path.exists(f'{oloc}/.git/'):
+    #     os.system(f'cd {oloc}; git add -A; git commit -m "update"; git push && echo "saved {typen}" ')
+    # else:
+    #     cmd = f'''git init;
+    #     git add -A;
+    #     git commit -m "first commit";
+    #     git branch -M main;
+    #     git remote add origin https://github.com/ONSvisual/{typen}.git;
+    #     # git push -u origin main;
+    #     git push --set-upstream origin main
+    #     '''
+    #     os.system(cmd)
+
+
+
+
 
 
 
