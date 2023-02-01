@@ -1,4 +1,5 @@
 all: pull 
+	@echo ''
 	make install -j
 
 say_hello:
@@ -27,8 +28,9 @@ install:
 	python3 -m numpy.f2py -c tilefunctions.f90 -m customtiles 
 
 	# tippiecanoe
-	sudo apt-get install build-essential libsqlite3-dev zlib1g-dev
+	sudo apt-get install build-essential libsqlite3-dev zlib1g-dev --yes
 	git clone https://github.com/mapbox/tippecanoe.git 
 	cd tippecanoe && make -j && make install && cd ../ && rm -rf tippecanoe
 
 	sudo apt-get install htop --yes
+
