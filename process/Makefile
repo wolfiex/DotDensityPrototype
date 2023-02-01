@@ -49,4 +49,4 @@ view:
 	screen -r compute
 
 kill:
-	screen -r compute -X quit
+	screen -R -D compute -X quit
