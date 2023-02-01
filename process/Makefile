@@ -14,9 +14,8 @@ pull:
 push:
 	git add -A && git commit -m 'makefile' && git push 
 
-single: view
-	screen -D -R compute -m 'pkill -9 python; python3 pipeline.py'
-	make view
+single: 
+	python3 pipeline.py
 
 pipeline:
 	@echo "Creating empty text files..."
