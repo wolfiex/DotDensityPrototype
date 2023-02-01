@@ -20,7 +20,8 @@
 
 
 ### Installing dependancies
-sudo apt install make
+1. Install gnu make: `sudo apt install make --yes`
+2. Run the installer: `make -j`
 
 
 
