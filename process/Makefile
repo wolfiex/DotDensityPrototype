@@ -1,4 +1,4 @@
-DATASETS="../../Inputs/data/TS*.csv"
+DATASETS=../../Inputs/data/TS*.csv
 
 all: splash pull 
 	@echo ''
