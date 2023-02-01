@@ -15,7 +15,8 @@ push:
 	git add -A && git commit -m 'makefile' && git push 
 
 single:
-	python3 pipeline.py
+	screen -d -S computing -m 'python3 pipeline.py'
+	make view
 
 pipeline:
 	@echo "Creating empty text files..."
@@ -43,3 +44,7 @@ install:
 
 	sudo apt-get install htop --yes
 	sudo apt install screen --yes
+
+view:
+	screen -S computing
+	
