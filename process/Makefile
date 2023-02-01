@@ -20,9 +20,9 @@ single:
 	python3 pipeline.py
 
 batch:
-	for data in $DATASETS
+	for data in ${DATASETS}
 	do
-	echo "$data"
+	echo "${data}"
 	done
 
 pipeline:
