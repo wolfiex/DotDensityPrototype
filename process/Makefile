@@ -27,7 +27,7 @@ install:
 	
 	# python 
 	sudo apt install python3-pip --yes 
-	pip install pandas numpy geopandas mercantile p_tqdm halo
+	pip install pandas numpy geopandas mercantile p_tqdm halo pyogrio
 	pip install protobuf==3.20.*
 	pip install git+https://github.com/mapbox/vector-tile-base 
 

@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
     ''' Lets  load all relevant data '''
     spin(f'Reading geometry')
-    geom = gpd.read_file(GEOMLOC,engine='pyogrio').set_index('OA21CD')
+    geom = gpd.read_file(GEOMLOC,engine='pyogrio').set_index('OA21CD') #pyogrio seems massively faster than fiona
     geom = geom.geometry
 
     spin(f'Reading {typen}')
@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
     if TIPPIECANOE:
 
-        spin('Saving Ratios GeoJSON')
+        spin('Saving* Ratios GeoJSON')
 
         geom = gpd.GeoDataFrame(geom)
         geom['ratios'] = [str(list(data.loc[i].values)).replace(' ','') for i in geom.index]
