@@ -124,7 +124,7 @@ if __name__ == '__main__':
     geom = gpd.read_file(GEOMLOC).set_index('OA21CD')
     geom = geom.geometry
 
-    spinner.text(f'Reading {typen}')
+    spin(f'Reading {typen}')
     data = pd.read_csv(DLOC+typen+'.csv').set_index('Geography code')
     
     # automatically select the sections with data in them. 
