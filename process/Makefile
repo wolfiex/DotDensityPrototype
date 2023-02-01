@@ -29,9 +29,7 @@ install:
 	# tippiecanoe
 
 	git clone https://github.com/mapbox/tippecanoe.git 
-	cd tippecanoe
-	make -j
-	make install
+	cd tippecanoe && make -j && make install
 	rm -rf tippecanoe
 
 	sudo apt-get install htop --yes
