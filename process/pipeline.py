@@ -1,27 +1,13 @@
 '''
 Dependancies: 
-
-    # python 
-    sudo apt install python3-pip
-    pip install pandas numpy geopandas mercantile p_tqdm 
-    pip install protobuf==3.20.*
-    pip install git+https://github.com/mapbox/vector-tile-base
-
-    # if f2py compiler is missing 
-    sudo apt-get install fortran
-
-    # tippiecanoe
-    git clone https://github.com/mapbox/tippecanoe.git
-    cd tippecanoe
-    make -j
-    make install
+    Run the makefile supplied: `make -j`
 
 Purpose: 
     A processing script for OA level census data to dot-density    
 
 Author: Daniel Elis 
 '''
-import os, sys, glob
+import os, sys, glob, gzip
 from halo import Halo
 sys.setrecursionlimit(2500)
 w = os.get_terminal_size().columns
@@ -51,7 +37,7 @@ HALF_BUFFER = 2./14. * HALF_EXTENT
 NCPUS = cpu_count()
 SKIP_SAVE = True
 TIPPIECANOE = True
-# GZIP = 
+GZIP = False 
 
 DLOC = '~/Inputs/data/' # data location
 GEOMLOC = '~/Inputs/geom.shp'
@@ -62,12 +48,20 @@ OUTPUTLOC = '~/ProcessedFiles'
 Common Functions
 '''
 
+# input output
+if GZIP:
+    io = gzip
+    GZIP = '.gz'
+else:
+    io = open
+    GZIP=''
 
+
+# spinner
 def spin(text):
     global spinner
     spinner.text = text
     spinner.start()
-
 
 spin('Compiling Fortran')
 '''this uses / compiles the fortran libraries. If the code falls over here delete the .so files and rerun. '''
@@ -79,6 +73,7 @@ except:
 spinner.stop()
 
 
+# directory
 def mkdir(loc):
     try: os.mkdir(loc)
     except:...
@@ -289,15 +284,18 @@ if __name__ == '__main__':
         del vt, _, multipoint,cat
         output = oloc
 
+
         try:
-            with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
+            with io(f'{output}/{z}/{x}/{y}.pbf'+GZIP,'wb') as f:
                 f.write(encoded_tile)
         except:
 
             mkdir(f'{output}/{z}')
             mkdir(f'{output}/{z}/{x}')
-            with open(f'{output}/{z}/{x}/{y}.pbf','wb') as f:
+            with io(f'{output}/{z}/{x}/{y}.pbf'+GZIP,'wb') as f:
                 f.write(encoded_tile)
+
+            
         
         del encoded_tile
         # nested
