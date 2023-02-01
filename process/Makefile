@@ -15,7 +15,7 @@ push:
 	git add -A && git commit -m 'makefile' && git push 
 
 single:
-	screen -d -S computing -m 'pkill -9 python; python3 pipeline.py'
+	screen -d -S compute -m 'pkill -9 python; python3 pipeline.py'
 	make view
 
 pipeline:
@@ -46,5 +46,7 @@ install:
 	sudo apt install screen --yes
 
 view:
-	screen -S computing
-	
+	screen -r compute
+
+kill:
+	screen -r compute -X quit
