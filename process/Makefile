@@ -15,7 +15,7 @@ generate:
 	
 install:
 	@echo "Installing dependancies"
-	sudo pkill -9 apt 
+	# sudo pkill -9 apt 
 	# python 
 	sudo apt install python3-pip --yes 
 	pip install pandas numpy geopandas mercantile p_tqdm
