@@ -11,7 +11,7 @@ import os, sys, glob, gzip
 from halo import Halo
 sys.setrecursionlimit(2500)
 w = os.get_terminal_size().columns
-os.system(f'cut -c1-{w} splash.txt')
+print(os.popen(f'cut -c1-{w} splash.txt').read())
 
 spinner = Halo(text='Loading libraries', spinner='dots')
 spinner.start()
