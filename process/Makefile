@@ -27,9 +27,11 @@ install:
 	python3 -m numpy.f2py -c tilefunctions.f90 -m customtiles 
 
 	# tippiecanoe
-	git clone https://github.com/mapbox/tippecanoe.git
+
+	git clone https://github.com/mapbox/tippecanoe.git 
 	cd tippecanoe
 	make -j
 	make install
+	rm -rf tippecanoe
 
 	sudo apt-get install htop --yes
