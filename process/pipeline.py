@@ -27,17 +27,19 @@ sys.setrecursionlimit(2500)
 w = os.popen('tput cols').read()
 os.system(f'cut -c1-{w} splash.txt')
 
-# import multiprocess.context as ctx
-# ctx._force_start_method('spawn')
+spinner = Halo(text='Loading libraries', spinner='dots')
+spinner.start()
+
 from multiprocessing import cpu_count
 from p_tqdm import p_uimap,p_umap
 from functools import partial
-
+# import multiprocess.context as ctx
+# ctx._force_start_method('spawn')
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 import mercantile, vector_tile_base
-
+spinner.stop()
 
 '''
 Constants!!!!!!!!!!!!!!!!!!!!!!
@@ -60,7 +62,7 @@ OUTPUTLOC = '~/ProcessedFiles'
 Common Functions
 '''
 
-spinner = Halo(text='', spinner='dots')
+
 def spin(text):
     global spinner
     spinner.text = text
