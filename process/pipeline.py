@@ -298,7 +298,7 @@ if __name__ == '__main__':
             # recursive processing
             for t in tiles:
                 
-                bbox = mercantile.Bbox(*list(t))
+                bbox = mercantile.bounds(t)
                 print(t,bbox)
                 subset = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
                 gunwale_bobbing(t,it+1,subset.loc)
