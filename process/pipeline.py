@@ -301,7 +301,7 @@ if __name__ == '__main__':
                 bbox = mercantile.bounds(t)
                 print(t,bbox)
                 subset = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
-                gunwale_bobbing(t,it+1,subset.loc)
+                gunwale_bobbing(t,it+1,subset)
 
         # last ditch attempt at garbage collection
         for x in list(locals()):
