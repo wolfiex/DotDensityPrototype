@@ -1,15 +1,13 @@
 # Dot Density Data - EC2 instance instructions. 
 
 ## Preperation 
-
-### Machine Parameters 
-#### No Cores
-- 32 - ideally 48
-#### RAM
-- 16GB per core (that is 512GB for 32 Cores, 768 GB for 48 )
-
 #### CURRENT tuning
 The current tuning is set such that it does not exceed 124GB on 32 cores.
+### Machine Parameters 
+- No Cores: 32 - ideally 48
+- RAM: 16GB per core (that is 512GB for 32 Cores, 768 GB for 48 ) 
+- HDD 32?
+
 
 ### Setting up keyless login
 1. Download your relevant `.pem` encryption file
