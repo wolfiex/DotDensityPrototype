@@ -339,11 +339,16 @@ if __name__ == '__main__':
 
 
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
-    for grouping in [list(range(7,11)),list(range(10,12)),12,13,14]:
 
-        tiles = list(mercantile.tiles(*bounds, zooms=grouping))
-        print(f'Layer set: {grouping}')
-        p_umap(gunwale_bobbing,tiles)
+
+    # [list(range(7,11)),list(range(10,12)),12,13,14]
+
+    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15))))
+    np.random.shuffle(tiles)
+    chunks = len(tiles)//(NCORES*50.)
+    for _,grouping in enumerate(np.split_array(tiles,chunks)):
+        print(f'Layer set {_} of {len(chunks)}')
+        p_umap(gunwale_bobbing,grouping)
 
   
 
