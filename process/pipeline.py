@@ -290,15 +290,16 @@ if __name__ == '__main__':
 
             
         
-        # if it<RECURSIVE:
-        #     tiles = list(mercantile.tiles(*bbox, zooms=[z+1]))
-        #     # recursive processing
-        #     for t in tiles:
+        if it<RECURSIVE:
+            tiles = list(mercantile.tiles(*bbox, zooms=[z+1]))
+            # recursive processing
+            for t in tiles:
                 
-        #         bbox = mercantile.bounds(t)
-        #         print(t,bbox,subset.head())
-        #         subset2 = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
-        #         gunwale_bobbing(t,it+1,subset2)
+                bbox = mercantile.bounds(t)
+                print(t,bbox,subset.head())
+                subset2 = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
+                if len(subset):
+                    gunwale_bobbing(t,it+1,subset2)
 
         # last ditch attempt at garbage collection
         for x in list(locals()):
