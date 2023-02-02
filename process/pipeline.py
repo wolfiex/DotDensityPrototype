@@ -297,6 +297,7 @@ if __name__ == '__main__':
             
         
         del encoded_tile
+        '''
         # nested
         if z+1 < stop and len(subset) : 
             
@@ -305,7 +306,7 @@ if __name__ == '__main__':
                 # recursive processing
                 gunwale_bobbing(t,subset,stop)
             del subset
-        
+        '''
         return 0 
                 
     ##########################
@@ -352,6 +353,7 @@ if __name__ == '__main__':
     
     print(' Not deleting previous computations. You may wish to do this manually. ')
 
+    '''
     # 7 - 10  and 10 - 14
     # split due to RAM memory limit when using a MBP 
     startstop = [[7,11],[11,12],[12,13],[13,14]]
@@ -365,6 +367,13 @@ if __name__ == '__main__':
         p_umap(partial(gunwale_bobbing, stop=e),tiles)
 
     print('continue')
+
+    '''
+
+    #  it may be better to treat each one individually - thus allowing adequate garbage collection
+    tiles = list(mercantile.tiles(*bounds, zooms=[range(7,14)]))
+
+    p_umap(partial(gunwale_bobbing),tiles)
 
   
 

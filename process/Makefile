@@ -23,9 +23,6 @@ batch:
 	for data in ${DATASETS}; do\
 		echo "- $${data}" ;\
 	done
-
-pipeline:
-	@echo "Creating empty text files..."
 	
 install:
 	@echo "Installing dependancies"
@@ -52,11 +49,11 @@ install:
 	sudo apt install screen --yes
 
 
-
-
-
 compute:
 	screen -RD compute
+
+view:
+	screen -ls
 
 kill:
 	screen -R -D compute -X quit
