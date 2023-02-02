@@ -242,8 +242,8 @@ if __name__ == '__main__':
 
 
 
-
-
+    from memory_profiler import profile
+    @profile
     def gunwale_bobbing(schema):
               
         x,y,z = schema
@@ -345,7 +345,7 @@ if __name__ == '__main__':
 
     tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15))))
     np.random.shuffle(tiles)
-    chunks = len(tiles)//(NCORES*100.)
+    chunks = len(tiles)//(NCPUS*100.)
     for _,grouping in enumerate(np.split_array(tiles,chunks)):
         print(f'Layer set {_} of {len(chunks)}')
         p_umap(gunwale_bobbing,grouping)
