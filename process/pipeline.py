@@ -7,34 +7,11 @@ Purpose:
 
 Author: Daniel Elis 
 '''
-import os, sys, glob, gzip, time
-from halo import Halo
-sys.setrecursionlimit(2500)
-w = os.get_terminal_size().columns
-print(os.popen(f'cut -c1-{w} splash.txt').read())
 
-spinner = Halo(text='Loading libraries', spinner='dots')
-spinner.start()
+#########################
+# Parameters 
+#########################
 
-from multiprocessing import cpu_count
-from p_tqdm import p_uimap,p_umap
-from functools import partial
-# import multiprocess.context as ctx
-# ctx._force_start_method('spawn')
-import numpy as np
-import pandas as pd
-import geopandas as gpd
-import mercantile, vector_tile_base
-spinner.stop()
-
-'''
-Constants!!!!!!!!!!!!!!!!!!!!!!
-'''
-
-EXTENT = 4096
-HALF_EXTENT = EXTENT/2 
-HALF_BUFFER = 2./14. * HALF_EXTENT
-NCPUS = cpu_count()
 SKIP_SAVE = False
 TIPPIECANOE = False
 GZIP = False 
@@ -43,6 +20,33 @@ GZIP = False
 DLOC = '../../Inputs/data/' # data location
 GEOMLOC = '../../Inputs/geom.shp'
 OUTPUTLOC = '../../ProcessedFiles/'
+
+
+
+'''
+Imports
+'''
+import os, sys, glob, gzip, time
+sys.setrecursionlimit(2500)
+from halo import Halo
+from multiprocessing import cpu_count
+from p_tqdm import p_uimap,p_umap
+from functools import partial
+import numpy as np
+import pandas as pd
+import geopandas as gpd
+import mercantile, vector_tile_base
+
+'''
+Constants
+'''
+EXTENT = 4096
+HALF_EXTENT = EXTENT/2 
+HALF_BUFFER = 2./14. * HALF_EXTENT
+NCPUS = cpu_count()
+w = os.get_terminal_size().columns
+print(os.popen(f'cut -c1-{w} splash.txt').read())
+spinner = Halo(text='Bleep Blop Beep', spinner='dots')
 
 
 '''
@@ -207,7 +211,7 @@ if __name__ == '__main__':
         spinner.text = 'Calculating points'
         spinner.stop()
         split = np.array_split(oas,NCPUS)#80
-        print(len(split[0]),'per core. (',NCPUS,' cores.)')
+        print(len(split[0]),'per core. (',NCPUS,' cores total)')
 
         res = []
         iterator = p_uimap(makepoints,split)
@@ -360,7 +364,7 @@ if __name__ == '__main__':
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
     tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15))))
 
-    p_umap(partial(gunwale_bobbing),tiles)
+    del p_umap(partial(gunwale_bobbing),tiles)
 
   
 
