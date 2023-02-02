@@ -390,7 +390,7 @@ if __name__ == '__main__':
 
 
 
-    print('\n\n Execition took %.02f minutes \n\n'%((time.time()-start)/3600))
+    print('\n\n Execition took %.02f minutes \n\n'%((time.time()-start)/360000))
 
     print(options)
 
