@@ -8,6 +8,9 @@
 #### RAM
 - 16GB per core (that is 512GB for 32 Cores, 768 GB for 48 )
 
+#### CURRENT tuning
+The current tuning is set such that it does not exceed 124GB on 32 cores.
+
 ### Setting up keyless login
 1. Download your relevant `.pem` encryption file
 2. Move this to the folder you will be sshing into the instance from. 
