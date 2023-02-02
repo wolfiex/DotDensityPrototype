@@ -249,11 +249,14 @@ if __name__ == '__main__':
         
         x,y,z = schema
         bbox = mercantile.bounds(x,y,z)
+
+        print('s',subset)
         if not subset:
             subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
         else:
             subset = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
 
+        print('sy',subset)
         if not len(subset): return 0 
 
         vt = vector_tile_base.VectorTile()
