@@ -228,11 +228,11 @@ if __name__ == '__main__':
         for l in iterator:
             res.extend(l)
 
-        spin('Saving computed points. ')
+        spin('Sorting computed points. ')
         gdf = pd.DataFrame(np.array(res,dtype=object))
         gdf.columns = 'cat point x y'.split()
         gdf = gdf.sort_values('x y'.split())
-
+        spinner.text = 'Saving computed points'
 
         if not SKIP_SAVE: gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
 
