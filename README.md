@@ -1,6 +1,13 @@
 # Dot Density Data - EC2 instance instructions. 
 
 ## Preperation 
+
+### Machine Parameters 
+#### No Cores
+- 32 - ideally 48
+#### RAM
+- 16GB per core (that is 512GB for 32 Cores, 768 GB for 48 )
+
 ### Setting up keyless login
 1. Download your relevant `.pem` encryption file
 2. Move this to the folder you will be sshing into the instance from. 

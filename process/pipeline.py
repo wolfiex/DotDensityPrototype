@@ -46,7 +46,7 @@ HALF_BUFFER = 2./14. * HALF_EXTENT
 NCPUS = cpu_count()
 w = os.get_terminal_size().columns
 print(os.popen(f'cut -c1-{w} splash.txt').read())
-spinner = Halo(text='Bleep Blop Beep', spinner='dots')
+
 
 
 '''
@@ -63,11 +63,15 @@ else:
 
 
 # spinner
+spinner = Halo(text='Bleep Blop Beep', spinner='dots')
+
 def spin(text):
     global spinner
     spinner.text = text
     spinner.start()
 
+
+# f90
 spin('Compiling Fortran')
 '''this uses / compiles the fortran libraries. If the code falls over here delete the .so files and rerun. '''
 try:
@@ -84,6 +88,11 @@ def mkdir(loc):
     except:...
 
 mkdir(OUTPUTLOC)
+
+
+
+
+
 
 if __name__ == '__main__':
 
@@ -236,14 +245,7 @@ if __name__ == '__main__':
 
 
     def gunwale_bobbing(schema):
-        
-        ''' 
-        speedy tiles 
-        schema x,y,z
-        data dataframe
-        '''        
-        
-
+              
         x,y,z = schema
         bbox = mercantile.bounds(x,y,z)
         subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
@@ -254,16 +256,12 @@ if __name__ == '__main__':
         layer.EXTENT=EXTENT
 
         by = 2**(14-int(z))
-        if by < 1: return 0 
+        if by < 1: return 0 # stop at 0 
 
         counter = 0 
         for _,multipoint in subset.iterrows():
 
             for point_ix in range(by,len(multipoint['point']),by):     # [z%2::by]: 
-                
-                    # counter += 1
-                    # #  if not divisible by our 2^n value, skip 
-                    # if (counter) % by: continue 
                     try:
                         feature = layer.add_point_feature()
                         feature.add_points(list(transform_geo(*bbox, *multipoint['point'][point_ix], EXTENT))) 
@@ -288,16 +286,6 @@ if __name__ == '__main__':
             
         
         del encoded_tile
-        '''
-        # nested
-        if z+1 < stop and len(subset) : 
-            
-            tiles = mercantile.tiles(*bbox, zooms=[z+1])
-            for t in tiles:
-                # recursive processing
-                gunwale_bobbing(t,subset,stop)
-            del subset
-        '''
         return 0 
                 
     ##########################
@@ -362,9 +350,10 @@ if __name__ == '__main__':
     '''
 
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
-    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15))))
-
-    del p_umap(partial(gunwale_bobbing),tiles)
+    for grouping in [list(range(7,10)),list(range(10,12))]:
+        tiles = list(mercantile.tiles(*bounds, zooms=grouping))
+        print(f'Layer set: {gropuing}')
+        del p_umap(partial(gunwale_bobbing),tiles,maxtasksperchild=10)
 
   
 
