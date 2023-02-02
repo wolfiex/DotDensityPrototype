@@ -286,6 +286,11 @@ if __name__ == '__main__':
             
         
         del encoded_tile
+
+        # last ditch attempt at garbage collection
+        for x in list(locals()):
+            del locals()[x]
+
         return 0 
                 
     ##########################
@@ -353,7 +358,7 @@ if __name__ == '__main__':
     for grouping in [list(range(7,10)),list(range(10,12))]:
         tiles = list(mercantile.tiles(*bounds, zooms=grouping))
         print(f'Layer set: {grouping}')
-        p_umap(unwale_bobbing,tiles,kwargs={maxtasksperchild:10})
+        p_umap(gunwale_bobbing,tiles,kwargs={maxtasksperchild:10})
 
   
 
