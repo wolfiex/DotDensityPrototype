@@ -39,9 +39,10 @@ SKIP_SAVE = False
 TIPPIECANOE = False
 GZIP = False 
 
+# locations must have "/" at the end
 DLOC = '../../Inputs/data/' # data location
 GEOMLOC = '../../Inputs/geom.shp'
-OUTPUTLOC = '../../ProcessedFiles'
+OUTPUTLOC = '../../ProcessedFiles/'
 
 
 '''
@@ -230,7 +231,7 @@ if __name__ == '__main__':
 
 
 
-    def gunwale_bobbing(schema,data=[],stop=14):
+    def gunwale_bobbing(schema):
         
         ''' 
         speedy tiles 
@@ -238,57 +239,43 @@ if __name__ == '__main__':
         data dataframe
         '''        
         
-        if not len(data): data = gdf.loc[:]
 
         x,y,z = schema
-        if z == stop: return 0 #secondary failsafe
         bbox = mercantile.bounds(x,y,z)
-        
-
-        subset = data.loc[data['x'].between(bbox.west,bbox.east) & data['y'].between(bbox.south,bbox.north)]
-        del data
-
+        subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
         if not len(subset): return 0 
 
-    
         vt = vector_tile_base.VectorTile()
         layer = vt.add_layer('custom_data_dan')
         layer.EXTENT=EXTENT
 
-        # by = 13-int(z)
         by = 2**(14-int(z))
         if by < 1: return 0 
 
-
         counter = 0 
-
         for _,multipoint in subset.iterrows():
-            cat = multipoint['cat']
 
-            for point in np.array(multipoint['point'],dtype=object):     # [z%2::by]: 
+            for point_ix in range(by,len(multipoint['point']),by):     # [z%2::by]: 
                 
-                    counter += 1
-                    #  if not divisible by our 2^n value, skip 
-                    if (counter) % by: continue 
-                
+                    # counter += 1
+                    # #  if not divisible by our 2^n value, skip 
+                    # if (counter) % by: continue 
                     try:
                         feature = layer.add_point_feature()
-                        feature.add_points(list(transform_geo(*bbox, *point, EXTENT))) 
-                        feature.attributes = { 'cat': cat }
+                        feature.add_points(list(transform_geo(*bbox, *multipoint['point'][point_ix], EXTENT))) 
+                        feature.attributes = { 'cat': multipoint['cat'] }
                     except:
                         print(f'err {p} {areagroup} {bbox}')
 
         
         encoded_tile = vt.serialize()
-        del vt, _, multipoint,cat
+        del vt, _, multipoint
         output = oloc
-
 
         try:
             with io(f'{output}/{z}/{x}/{y}.pbf'+GZIP,'wb') as f:
                 f.write(encoded_tile)
         except:
-
             mkdir(f'{output}/{z}')
             mkdir(f'{output}/{z}/{x}')
             with io(f'{output}/{z}/{x}/{y}.pbf'+GZIP,'wb') as f:
@@ -371,7 +358,7 @@ if __name__ == '__main__':
     '''
 
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
-    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,14))))
+    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15))))
 
     p_umap(partial(gunwale_bobbing),tiles)
 
