@@ -352,7 +352,7 @@ if __name__ == '__main__':
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
     for grouping in [list(range(7,10)),list(range(10,12))]:
         tiles = list(mercantile.tiles(*bounds, zooms=grouping))
-        print(f'Layer set: {gropuing}')
+        print(f'Layer set: {grouping}')
         p_umap(unwale_bobbing,tiles,kwargs={maxtasksperchild:10})
 
   
