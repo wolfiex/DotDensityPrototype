@@ -298,7 +298,7 @@ if __name__ == '__main__':
                 bbox = mercantile.bounds(t)
                 
                 subset2 = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
-                if len(subset):
+                if len(subset2):
                     try:gunwale_bobbing(t,it+1,subset2)
                     except: print(subset2.shape)
 
