@@ -371,7 +371,7 @@ if __name__ == '__main__':
     '''
 
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
-    tiles = list(mercantile.tiles(*bounds, zooms=[range(7,14)]))
+    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,14))))
 
     p_umap(partial(gunwale_bobbing),tiles)
 
