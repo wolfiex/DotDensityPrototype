@@ -337,22 +337,6 @@ if __name__ == '__main__':
     
     print(' Not deleting previous computations. You may wish to do this manually. ')
 
-    '''
-    # 7 - 10  and 10 - 14
-    # split due to RAM memory limit when using a MBP 
-    startstop = [[7,11],[11,12],[12,13],[13,14]]
-
-    # startstop=[]
-
-    for b,e in startstop:
-        print(f'Processing layers {b} - {e}')
-        tiles = list(mercantile.tiles(*bounds, zooms=[b]))
-
-        p_umap(partial(gunwale_bobbing, stop=e),tiles)
-
-    print('continue')
-
-    '''
 
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
     for grouping in [list(range(7,10)),list(range(10,13)),list(range(13,15))]:
