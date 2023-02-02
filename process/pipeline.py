@@ -40,6 +40,7 @@ import mercantile, vector_tile_base
 '''
 Constants
 '''
+RECURSIVE=3
 EXTENT = 4096
 HALF_EXTENT = EXTENT/2 
 HALF_BUFFER = 2./14. * HALF_EXTENT
@@ -288,7 +289,7 @@ if __name__ == '__main__':
 
             
         
-        if it<3:
+        if it<RECURSIVE:
             tiles = mercantile.tiles(*bbox, zooms=[z+1])
             # recursive processing
             for t in tiles:
@@ -350,7 +351,8 @@ if __name__ == '__main__':
 
     # [list(range(7,11)),list(range(10,12)),12,13,14]
 
-    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15,3))))
+    #  we compute zoom levels with 3 levels of recursion that is in sets of 64 tiles (4**3) 
+    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15,RECURSIVE))))
     np.random.shuffle(tiles)
     chunks = int(len(tiles)//(NCPUS*200))
     for _,grouping in enumerate(np.array_split(tiles,chunks)):
