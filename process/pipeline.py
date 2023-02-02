@@ -353,7 +353,7 @@ if __name__ == '__main__':
     for grouping in [list(range(7,10)),list(range(10,12))]:
         tiles = list(mercantile.tiles(*bounds, zooms=grouping))
         print(f'Layer set: {gropuing}')
-        del p_umap(partial(gunwale_bobbing),tiles,maxtasksperchild=10)
+        del p_umap(unwale_bobbing,tiles,kwargs={maxtasksperchild:10})
 
   
 
