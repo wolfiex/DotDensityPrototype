@@ -243,6 +243,8 @@ if __name__ == '__main__':
 
 
 
+
+
     # from memory_profiler import profile
     # @profile
     def gunwale_bobbing(schema,it=0,subset=False):
@@ -250,7 +252,6 @@ if __name__ == '__main__':
         x,y,z = schema
         bbox = mercantile.bounds(x,y,z)
 
-        print(schema)
 
 
         if not subset:
@@ -295,7 +296,7 @@ if __name__ == '__main__':
             
         
         if it<RECURSIVE:
-            tiles = mercantile.tiles(*bbox, zooms=[z+1])
+            tiles = list(mercantile.tiles(*bbox, zooms=[z+1]))
             # recursive processing
             for t in tiles:
                 gunwale_bobbing(t,it+1,subset)
