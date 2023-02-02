@@ -250,13 +250,15 @@ if __name__ == '__main__':
         x,y,z = schema
         bbox = mercantile.bounds(x,y,z)
 
-        print('s',subset)
+        print(schema)
+
+
         if not subset:
             subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
         else:
             subset = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
 
-        print('sy',subset)
+
         if not len(subset): return 0 
 
         vt = vector_tile_base.VectorTile()
@@ -360,7 +362,7 @@ if __name__ == '__main__':
     chunks = int(len(tiles)//(NCPUS*200))
     for _,grouping in enumerate(np.array_split(tiles,chunks)):
         print(f'Layer set {_+1} of {chunks}')
-        p_umap(gunwale_bobbing,grouping)
+        map(gunwale_bobbing,grouping)
 
   
 
