@@ -28,6 +28,8 @@ The current tuning is set such that it does not exceed 124GB on 32 cores.
 
 
 ### Installing dependancies
+0. Navigate to the processing repo:
+`cd DotDensityPrototype/process`
 1. Install gnu make: `sudo apt install make --yes`
 2. Run the installer: `make -j`
 3. If a pink screen appears hit ENTER only 
