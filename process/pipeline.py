@@ -361,7 +361,7 @@ if __name__ == '__main__':
     #  we compute zoom levels with 3 levels of recursion that is in sets of 64 tiles (4**3) 
     tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15,RECURSIVE))))
     np.random.shuffle(tiles)
-    chunks = int(len(tiles)//(NCPUS*200))
+    chunks = int(len(tiles)//(NCPUS*100))
     for _,grouping in enumerate(np.array_split(tiles,chunks)):
         print(f'Layer set {_+1} of {chunks}')
         p_umap(gunwale_bobbing,grouping)
