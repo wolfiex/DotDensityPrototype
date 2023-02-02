@@ -346,7 +346,7 @@ if __name__ == '__main__':
     tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15))))
     np.random.shuffle(tiles)
     chunks = len(tiles)//(NCPUS*100.)
-    for _,grouping in enumerate(np.split_array(tiles,chunks)):
+    for _,grouping in enumerate(np.array_split(tiles,chunks)):
         print(f'Layer set {_} of {len(chunks)}')
         p_umap(gunwale_bobbing,grouping)
 
