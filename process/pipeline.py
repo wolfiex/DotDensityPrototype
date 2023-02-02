@@ -355,7 +355,7 @@ if __name__ == '__main__':
     '''
 
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
-    for grouping in [list(range(7,10)),list(range(10,12))]:
+    for grouping in [list(range(7,10)),list(range(10,13)),list(range(13,15))]:
         tiles = list(mercantile.tiles(*bounds, zooms=grouping))
         print(f'Layer set: {grouping}')
         p_umap(gunwale_bobbing,tiles)
@@ -386,7 +386,7 @@ if __name__ == '__main__':
 
 
 
-    print('\n\n Execition took %.02f minutes \n\n'%(time.time()-start)/60)
+    print('\n\n Execition took %.02f minutes \n\n'%((time.time()-start)/60))
 
     print(options)
 
