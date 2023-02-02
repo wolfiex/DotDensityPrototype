@@ -362,7 +362,7 @@ if __name__ == '__main__':
     chunks = int(len(tiles)//(NCPUS*200))
     for _,grouping in enumerate(np.array_split(tiles,chunks)):
         print(f'Layer set {_+1} of {chunks}')
-        map(gunwale_bobbing,grouping)
+        p_umap(gunwale_bobbing,grouping)
 
   
 
