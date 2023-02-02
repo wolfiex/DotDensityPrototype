@@ -250,15 +250,12 @@ if __name__ == '__main__':
     def gunwale_bobbing(schema,it=0,subset=False):
         
         x,y,z = schema
-        bbox = mercantile.bounds(x,y,z)
-
-        if subset:print('ssuubb')
-        print(bbox)
 
         if not subset:
+            bbox = mercantile.bounds(x,y,z)
             subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
-        else:
-            subset = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
+     
+            
 
 
         if not len(subset): return 0 
@@ -300,7 +297,11 @@ if __name__ == '__main__':
             tiles = list(mercantile.tiles(*bbox, zooms=[z+1]))
             # recursive processing
             for t in tiles:
-                gunwale_bobbing(t,it+1,subset)
+                
+                bbox = mercantile.Bbox(t)
+                print(t,bbox)
+                subset = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
+                gunwale_bobbing(t,it+1,subset.loc)
 
         # last ditch attempt at garbage collection
         for x in list(locals()):
