@@ -22,7 +22,9 @@ single:
 batch:
 	for data in ${DATASETS}; do\
 		python3 pipeline.py $${data} ;\
-	done
+	done;
+	# transfer cp/scp/sftp command here 
+	# you can add a "sudo shutdown -h now" option to turn off the machine
 	
 install:
 	@echo "Installing dependancies"
