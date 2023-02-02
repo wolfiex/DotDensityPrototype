@@ -244,11 +244,15 @@ if __name__ == '__main__':
 
     # from memory_profiler import profile
     # @profile
-    def gunwale_bobbing(schema):
-              
+    def gunwale_bobbing(schema,it=0,subset=False):
+        
         x,y,z = schema
         bbox = mercantile.bounds(x,y,z)
-        subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
+        if not subset:
+            subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
+        else:
+            subset = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
+
         if not len(subset): return 0 
 
         vt = vector_tile_base.VectorTile()
@@ -271,7 +275,6 @@ if __name__ == '__main__':
 
         
         encoded_tile = vt.serialize()
-        del vt, _, multipoint
         output = oloc
 
         try:
@@ -285,7 +288,11 @@ if __name__ == '__main__':
 
             
         
-        del encoded_tile
+        if it<3:
+            tiles = mercantile.tiles(*bbox, zooms=[z+1])
+            # recursive processing
+            for t in tiles:
+                gunwale_bobbing(t,it+1,subset)
 
         # last ditch attempt at garbage collection
         for x in list(locals()):
@@ -343,11 +350,11 @@ if __name__ == '__main__':
 
     # [list(range(7,11)),list(range(10,12)),12,13,14]
 
-    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15))))
+    tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15,3))))
     np.random.shuffle(tiles)
-    chunks = int(len(tiles)//(NCPUS*400))
+    chunks = int(len(tiles)//(NCPUS*200))
     for _,grouping in enumerate(np.array_split(tiles,chunks)):
-        print(f'Layer set {_} of {chunks}')
+        print(f'Layer set {_+1} of {chunks}')
         p_umap(gunwale_bobbing,grouping)
 
   
