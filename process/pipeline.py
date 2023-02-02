@@ -13,7 +13,7 @@ Author: Daniel Elis
 #########################
 
 SKIP_SAVE = False
-TIPPIECANOE = False
+TIPPIECANOE = True
 GZIP = False 
 
 # locations must have "/" at the end
