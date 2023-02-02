@@ -13,8 +13,8 @@ Author: Daniel Elis
 #########################
 
 SKIP_SAVE = False
-TIPPIECANOE = True
-GZIP = False 
+TIPPIECANOE = False
+GZIP = True 
 
 # locations must have "/" at the end
 DLOC = '../../Inputs/data/' # data location

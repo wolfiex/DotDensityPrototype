@@ -21,7 +21,7 @@ single:
 
 batch:
 	for data in ${DATASETS}; do\
-		echo "- $${data}" ;\
+		python3 pipeline.py $${data} ;\
 	done
 	
 install:
