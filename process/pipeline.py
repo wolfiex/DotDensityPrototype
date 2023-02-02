@@ -231,10 +231,10 @@ if __name__ == '__main__':
         spin('Sorting computed points. ')
         gdf = pd.DataFrame(np.array(res,dtype=object))
         gdf.columns = 'cat point x y'.split()
-        gdf = gdf.sort_values('x y'.split())
+        gdf = gdf.sort_values('x y'.split()).reset_index()
         spinner.text = 'Saving computed points'
 
-        if not SKIP_SAVE: gdf.reset_index().to_pickle(f'{oloc}/points.pkl')
+        if not SKIP_SAVE: gdf.to_pickle(f'{oloc}/points.pkl')
 
         with open(f'{oloc}/.gitignore','a') as f:
             f.write('\n *.pkl')
