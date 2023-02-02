@@ -56,7 +56,7 @@ Common Functions
 
 # input output
 if GZIP:
-    io = gzip
+    io = gzip.open
     GZIP = '.gz'
 else:
     io = open
