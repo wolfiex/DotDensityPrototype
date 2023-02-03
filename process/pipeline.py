@@ -250,9 +250,9 @@ if __name__ == '__main__':
     def gunwale_bobbing(schema,it=0,subset=[]):
         
         x,y,z = schema
-
+        bbox = mercantile.bounds(x,y,z)
+        
         if not len(subset):
-            bbox = mercantile.bounds(x,y,z)
             subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
         
         if not len(subset): return 0 
