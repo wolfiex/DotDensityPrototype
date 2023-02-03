@@ -254,8 +254,7 @@ if __name__ == '__main__':
         if not len(subset):
             bbox = mercantile.bounds(x,y,z)
             subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
-        else:(print(subset))
-     
+        
         if not len(subset): return 0 
 
         vt = vector_tile_base.VectorTile()
@@ -297,11 +296,8 @@ if __name__ == '__main__':
             for t in tiles:
                 
                 bbox = mercantile.bounds(t)
-                
                 subset2 = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
-                if len(subset2):
-                    try:gunwale_bobbing(t,it+1,subset)
-                    except: print(subset2.shape)
+                gunwale_bobbing(t,it+1,subset2)
 
         # last ditch attempt at garbage collection
         for x in list(locals()):
@@ -393,7 +389,7 @@ if __name__ == '__main__':
 
 
 
-    print('\n\n Execition took %.02f minutes \n\n'%((time.time()-start)/360000))
+    print('\n\n Execition took %d  \n\n'%((time.time()-start)))
 
     print(options)
 
