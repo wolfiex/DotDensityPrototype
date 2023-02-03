@@ -247,7 +247,7 @@ if __name__ == '__main__':
 
     # from memory_profiler import profile
     # @profile
-    def gunwale_bobbing(schema,it=0,subset=False):
+    def gunwale_bobbing(schema,it=0,subset=[]]):
         
         x,y,z = schema
 
