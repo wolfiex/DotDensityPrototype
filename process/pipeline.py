@@ -251,7 +251,7 @@ if __name__ == '__main__':
         
         x,y,z = schema
 
-        if not subset:
+        if not len(subset):
             bbox = mercantile.bounds(x,y,z)
             subset = gdf.loc[gdf['x'].between(bbox.west,bbox.east) & gdf['y'].between(bbox.south,bbox.north)]
         else:(print(subset))
