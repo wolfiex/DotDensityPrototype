@@ -25,7 +25,7 @@ The current tuning is set such that it does not exceed 124GB on 32 cores.
 ```shell
 # some commands
 
-# copy inputs (or other file to local machine )
+# copy inputs (or other file EC2 to local machine )
 scp -i "xxx.pem" ubuntu@ec2-xxxxxxxx.eu-west-2.compute.amazonaws.com:~/Inputs.tar.gz ./
 
 # tar some files on machine

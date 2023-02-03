@@ -12,7 +12,7 @@ Author: Daniel Elis
 # Parameters 
 #########################
 
-SKIP_SAVE = False
+SKIP_SAVE = True
 TIPPIECANOE = False
 GZIP = True 
 
@@ -57,7 +57,7 @@ Common Functions
 # input output
 if GZIP:
     io = gzip.open
-    GZIP = '.gz'
+    GZIP = ''# commented out .gz 
 else:
     io = open
     GZIP=''
@@ -299,7 +299,7 @@ if __name__ == '__main__':
                 
                 subset2 = subset.loc[subset['x'].between(bbox.west,bbox.east) & subset['y'].between(bbox.south,bbox.north)]
                 if len(subset2):
-                    try:gunwale_bobbing(t,it+1,subset2)
+                    try:gunwale_bobbing(t,it+1,subset)
                     except: print(subset2.shape)
 
         # last ditch attempt at garbage collection
