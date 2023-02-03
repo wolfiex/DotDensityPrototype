@@ -272,8 +272,7 @@ if __name__ == '__main__':
                         feature = layer.add_point_feature()
                         feature.add_points(list(transform_geo(*bbox, *multipoint['point'][point_ix], EXTENT))) 
                         feature.attributes = { 'cat': multipoint['cat'] }
-                    except:
-                        print(f'err {p} {areagroup} {bbox}')
+                    except: ...
 
         
         encoded_tile = vt.serialize()
@@ -344,17 +343,10 @@ if __name__ == '__main__':
     xx = gdf.x.max()
 
     bounds = (xn,yn,xx,yx)
-
     # bounds = (-0.488892,51.280817,0.189514,51.699800)
-    
     print(' Not deleting previous computations. You may wish to do this manually. ')
 
-
     #  it may be better to treat each one individually - thus allowing adequate garbage collection
-
-
-    # [list(range(7,11)),list(range(10,12)),12,13,14]
-
     #  we compute zoom levels with 3 levels of recursion that is in sets of 64 tiles (4**3) 
     tiles = list(mercantile.tiles(*bounds, zooms=list(range(7,15,RECURSIVE))))
     np.random.shuffle(tiles)
@@ -385,12 +377,7 @@ if __name__ == '__main__':
         f.write(options)
 
     print(typen)
-
-
-
-
     print('\n\n Execition took %d  \n\n'%((time.time()-start)))
-
     print(options)
 
 
