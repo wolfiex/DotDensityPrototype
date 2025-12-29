@@ -4,21 +4,11 @@
   import { onMount, onDestroy } from 'svelte';
 
   export let map;
-  export let config = null;
+  export let config;
 
-  let mapContainer;
-
-  onMount(async () => {
-    // Load config
-    if (!config) {
-      const res = await fetch('/config.json');
-      config = await res.json();
-    }
-
-    // Include webgl2 in maplibregl
-    if (
-      maplibregl.Map.prototype._setupPainter.toString().indexOf('webgl2') == -1
-    ) {
+  onMount(() => {
+    // WebGL2 support
+    if (maplibregl.Map.prototype._setupPainter.toString().indexOf('webgl2') === -1) {
       const _setupPainter_old = maplibregl.Map.prototype._setupPainter;
       maplibregl.Map.prototype._setupPainter = function () {
         const getContext_old = this._canvas.getContext;
@@ -36,7 +26,7 @@
 
     map = window.map = new maplibregl.Map({
       container: 'map',
-      zoom: 9.5,
+      zoom: 8.5,
       pitch: 5,
       center: [-0.1360581413730415, 51.514891380499904],
       style: '/style-dark.json',
@@ -47,19 +37,17 @@
     map.doubleClickZoom.disable();
 
     map.on('load', function () {
-      const tileHost = config.tileHost;
-      const defaultTile = config.defaultTile;
+      if (!config) return;
+      
+      const { tileHost, ratioHost, datasets } = config;
+      const defaultTile = Object.keys(datasets)[0];
+      const dataset = datasets[defaultTile];
 
-      console.log('Loading tiles from:', `${tileHost}/${defaultTile}/{z}/{x}/{y}.pbf`);
-      console.log('Source layer:', config.sourceLayer);
-
-      // Polygons source
+      // Ratio/polygon source - from ONS Visual
       map.addSource('ratio-src', {
         type: 'vector',
         maxzoom: 13,
-        tiles: [
-          `${tileHost}/${defaultTile}/ratios/{z}/{x}/{y}.pbf`
-        ]
+        tiles: [`${ratioHost}/${defaultTile}/ratios/{z}/{x}/{y}.pbf?raw=true`]
       });
 
       // Polygon layer
@@ -67,7 +55,7 @@
         id: 'poly-layer',
         type: 'fill',
         source: 'ratio-src',
-        'source-layer': config.ratioSourceLayer,
+        'source-layer': dataset.ratioLayer,
         maxzoom: 22,
         minzoom: 0,
         paint: {
@@ -76,63 +64,34 @@
         }
       });
 
-      // Dots source
+      // Dots source - from wolfiex
       map.addSource('dot-src', {
         type: 'vector',
         maxzoom: 14,
         minzoom: 6,
-        tiles: [
-          `${tileHost}/${defaultTile}/{z}/{x}/{y}.pbf`
-        ]
+        tiles: [`${tileHost}/${defaultTile}/{z}/{x}/{y}.pbf?raw=true`]
       });
 
-      // Dots layer - removed filter to debug
+      // Dots layer
       map.addLayer({
         id: 'dot-data',
         type: 'circle',
         source: 'dot-src',
         maxzoom: 22,
         minzoom: 4,
-        'source-layer': config.sourceLayer,
+        'source-layer': dataset.dotLayer,
         paint: {
-          'circle-radius': 2,
-          'circle-color': 'red',
-          'circle-opacity': 1
-        }
+          'circle-radius': 0.5,
+          'circle-color': 'white',
+          'circle-opacity': 0.83
+        },
+        filter: ['==', '$type', 'Point']
       });
 
       map.setZoom(10.3);
-
-      // Debug: Check what's in the tiles after they load
-      map.on('sourcedata', (e) => {
-        if (e.sourceId === 'dot-src' && e.isSourceLoaded) {
-          console.log('Dot source loaded');
-          
-          // Try to get vector tile features
-          const features = map.querySourceFeatures('dot-src', {
-            sourceLayer: config.sourceLayer
-          });
-          console.log('Features with sourceLayer "' + config.sourceLayer + '":', features.length);
-          
-          if (features.length === 0) {
-            // Try to find what layers exist
-            console.log('Trying to find available source layers...');
-            // Query rendered features to see what's there
-            const rendered = map.queryRenderedFeatures();
-            console.log('All rendered features:', rendered.length);
-            rendered.slice(0, 5).forEach(f => {
-              console.log('Feature source:', f.source, 'sourceLayer:', f.sourceLayer);
-            });
-          } else {
-            console.log('Sample feature:', features[0]);
-          }
-        }
-      });
     });
 
-    map.on('error', (e) => {
-      console.error('MapLibre error:', e.error);
-    });
+    map.on('error', (e) => console.error('MapLibre error:', e.error));
   });
 
   onDestroy(() => {
@@ -143,7 +102,7 @@
   });
 </script>
 
-<div id="map" bind:this={mapContainer}></div>
+<div id="map"></div>
 
 <style>
   #map {

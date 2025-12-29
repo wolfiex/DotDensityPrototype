@@ -1,119 +1,175 @@
-<svelte:head>
-  <link rel="stylesheet" href="/coloris.min.css" />
-  <script src="/coloris.min.js"></script>
-</svelte:head>
-
 <script>
   import { ProgressBar } from 'carbon-components-svelte';
-  import { onMount } from 'svelte';
+  import { onMount, afterUpdate, tick } from 'svelte';
 
-  export let csum;
-  export let bcsum;
+  export let csum = [];
+  export let bcsum = [];
   export let keys = [];
-  export let colour;
-  export let colourbase;
+  export let colour = [];
+  export let colourbase = [];
+
+  async function updateBarColors() {
+    await tick();
+    if (!colour || !colourbase || !keys.length) return;
+    
+    for (let i = 0; i < keys.length; i++) {
+      try {
+        const bar = document.querySelector(`[id="cat-${i}"] .bx--progress-bar__bar`);
+        const baseBar = document.querySelector(`[id="catbase-${i}"] .bx--progress-bar__bar`);
+        const activeColor = colour[i] || colourbase[i];
+        
+        if (bar) {
+          bar.style.backgroundColor = activeColor;
+        }
+        if (baseBar) {
+          baseBar.style.backgroundColor = activeColor === 'transparent' ? 'transparent' : (colourbase[i] || activeColor);
+        }
+      } catch (e) {
+        console.warn('Error updating bar color:', e);
+      }
+    }
+  }
 
   onMount(() => {
-    console.warn(colour, 'col');
-    setTimeout(() => {
-      bcupdate(colour);
-    }, 1000);
+    setTimeout(updateBarColors, 100);
   });
 
-  async function bcupdate(colour) {
-    if (colour) {
-      colour.forEach((c, i) => {
-        try {
-          const catBar = document.querySelector(`#cat_${i} div.bx--progress-bar__bar`);
-          if (catBar) catBar.style['background-color'] = c;
+  afterUpdate(() => {
+    updateBarColors();
+  });
 
-          const catBaseBar = document.querySelector(`#catbase_${i} div.bx--progress-bar__bar`);
-          if (catBaseBar) catBaseBar.style['background-color'] = c;
-        } catch (err) {
-          // Ignore errors
-        }
-      });
-    }
-  }
-
-  function update_colour(i) {
-    if (colour[i] === 'transparent') {
-      colour[i] = colourbase[i];
+  function toggleCategory(index) {
+    if (colour[index] === 'transparent') {
+      colour[index] = colourbase[index];
     } else {
-      colour[i] = 'transparent';
+      colour[index] = 'transparent';
     }
+    colour = [...colour];
+    updateBarColors();
   }
 
-  function reset_colour(i) {
-    colour[i] = colourbase[i];
-  }
-
-  $: {
-    keys.forEach((d, i) => {
-      reset_colour(i);
-    });
-  }
-
-  $: bcupdate(colour);
+  // Reactive updates
+  $: if (csum) updateBarColors();
+  $: if (colour) updateBarColors();
+  $: if (keys) updateBarColors();
 </script>
 
-<main>
-  <span class="calculating-text">::calculating::</span>
-
-  {#each keys.map((d, i) => [i, d]) as [i, cat]}
+<div class="categories">
+  {#each keys as category, i (i)}
     <button
       type="button"
-      class="lk"
-      on:click={() => update_colour(i)}
+      class="category-row"
+      class:hidden={colour[i] === 'transparent'}
+      on:click={() => toggleCategory(i)}
     >
-      <ProgressBar value={1 + csum[i]} labelText={cat} id={'cat_' + i} helperText="" />
-      <ProgressBar value={1 + bcsum[i]} id={'catbase_' + i} />
+      <span class="category-label">{category}</span>
+      <div class="bars-container">
+        <div class="main-bar">
+          <ProgressBar
+            value={csum[i] || 0}
+            max={100}
+            id="cat-{i}"
+            hideLabel
+          />
+        </div>
+        <div class="base-bar">
+          <ProgressBar
+            value={bcsum[i] || 0}
+            max={100}
+            id="catbase-{i}"
+            hideLabel
+          />
+        </div>
+      </div>
     </button>
   {/each}
-</main>
+</div>
 
 <style>
-  .calculating-text {
-    opacity: 0;
-    float: right;
+  .categories {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  :global(div[id^='cat_']) {
-    height: 0.5em !important;
-  }
-
-  :global(div[id^='catbase_']) {
-    height: 1px !important;
-    top: -1.3em;
-  }
-
-  .lk {
-    padding: 1px;
-    padding-top: 2px;
-    margin-top: 1px;
+  .category-row {
     display: block;
     width: 100%;
     background: none;
     border: none;
+    padding: 6px 4px;
     cursor: pointer;
     text-align: left;
+    transition: opacity 0.2s;
+    border-radius: 4px;
   }
 
-  :global(.loading .bx--progress-bar__bar) {
-    opacity: 0.8;
-    animation: blinker 4s linear infinite;
+  .category-row:hover {
+    background: rgba(255, 255, 255, 0.08);
   }
 
-  :global(.loading span) {
-    opacity: 1;
-    color: rgb(255, 255, 255);
-    font-size: medium;
-    animation: blinker 4s linear infinite;
+  .category-row.hidden {
+    opacity: 0.35;
   }
 
-  @keyframes blinker {
-    50% {
-      opacity: 0.4;
-    }
+  .category-label {
+    display: block;
+    font-size: 0.72rem;
+    color: #ccc;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .bars-container {
+    position: relative;
+    height: 12px;
+  }
+
+  .main-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+  }
+
+  .base-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    opacity: 0.4;
+  }
+
+  /* Override Carbon styles */
+  :global(.categories .bx--progress-bar) {
+    min-width: unset !important;
+    height: 100% !important;
+  }
+
+  :global(.categories .bx--progress-bar__track) {
+    height: 100% !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  :global(.categories .bx--progress-bar__bar) {
+    height: 100% !important;
+    transition: width 0.3s ease, background-color 0.3s ease;
+  }
+
+  :global(.categories .bx--progress-bar__label),
+  :global(.categories .bx--progress-bar__helper-text) {
+    display: none !important;
+  }
+
+  /* Loading animation */
+  :global(.loading .categories .bx--progress-bar__bar) {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
   }
 </style>

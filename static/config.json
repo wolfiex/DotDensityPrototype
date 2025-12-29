@@ -1,6 +1,41 @@
 {
   "tileHost": "https://wolfiex.github.io/DotDensityTiles/static",
-  "defaultTile": "TS021_ethnic_group_tb_6a_2021",
-  "sourceLayer": "TS021_ethnic_group_tb_6a_2021",
-  "ratioSourceLayer": "ratio"
+  "ratioHost": "https://onsvisual.github.io",
+  "datasets": {
+    "TS021_ethnic_group_tb_6a_2021": {
+      "name": "Ethnicity",
+      "dotLayer": "TS021_ethnic_group_tb_6a_2021",
+      "ratioLayer": "ratio",
+      "keys": [
+        "Asian, Asian British or Asian Welsh",
+        "Black, Black British, Black Welsh, Caribbean or African",
+        "Mixed or Multiple ethnic groups",
+        "White",
+        "Other ethnic group"
+      ],
+      "ratios": [11.04, 4.797, 3.48, 100.0, 2.51]
+    },
+    "TS002_legal_partnership_status_3a_2021": {
+      "name": "Legal Partnership",
+      "dotLayer": "TS002_legal_partnership_status_3a_2021",
+      "ratioLayer": "ratio",
+      "keys": [
+        "Married or in a registered civil partnership",
+        "Other marital or civil partnership status"
+      ],
+      "ratios": [81.2, 100.0]
+    },
+    "TS017_hh_size_5a_2021": {
+      "name": "Household Size",
+      "dotLayer": "TS017_hh_size_5a_2021",
+      "ratioLayer": "ratio",
+      "keys": [
+        "1 person in household",
+        "2 people in household",
+        "3 people in household",
+        "4 or more people in household"
+      ],
+      "ratios": [63.5, 100.0, 38.2, 45.8]
+    }
+  }
 }

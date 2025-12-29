@@ -2,118 +2,97 @@
   import { onMount } from 'svelte';
   import MapComponent from './MapComponent.svelte';
   import Categories from './Categories.svelte';
+  import { Dropdown, Search, Slider, Toggle } from 'carbon-components-svelte';
+  import 'carbon-components-svelte/css/g100.css';
 
-  import('carbon-components-svelte/css/g100.css');
-  import { Dropdown, Search, Slider } from 'carbon-components-svelte';
-
-  let colourbase = ['ffbe0b', 'fb5607', 'ff006e', '8338ec', '3a86ff'].map(
-    (d) => '#' + d
-  );
+  // Color palette
+  const colourbase = ['#ffbe0b', '#fb5607', '#ff006e', '#8338ec', '#3a86ff'];
+  
+  // State
   let map;
-  let colour;
-  let csum = [100, 100, 100, 100, 100, 100];
+  let config = null;
+  let colour = [...colourbase];
+  let csum = [100, 100, 100, 100, 100];
+  let bcsum = [100, 100, 100, 100, 100];
+  let keys = [];
   let legend;
   let debounce = new Date();
-  let update = false;
-  let keytitle = 'England + Wales ';
+  let usePageAverage = false;
+  let keytitle = 'England + Wales';
   let keycentre = false;
-  let type, keys, tile, bcsum;
+  let tile = '';
   let dscale = 0.1;
   let isUpdating = false;
-  let config = null;
 
-  tile = 'TS021_ethnic_group_tb_6a_2021';
-  colour = [...colourbase];
+  // Panel visibility
+  let showMenu = true;
+  let showInstruct = true;
+  let showLegend = true;
 
-  const names = [
-    { id: 'TS021_ethnic_group_tb_6a_2021', text: 'Ethnicity' },
-    { id: 'TS045_number_of_cars_5a_2021', text: 'Number of Cars' },
-    { id: 'TS002_legal_partnership_status_3a_2021', text: 'Legal Partnership' },
-    { id: 'TS059_hours_per_week_worked_3a_2021', text: 'Work Hours Per Week' }
-  ];
+  // Derived from config
+  let datasets = [];
 
-  async function changetile(type) {
-    if (!map || isUpdating || !config) return 0;
+  // Change tile dataset
+  async function changetile(tileId) {
+    if (!map || isUpdating || !config || !tileId) return;
     
-    const source = map.getSource('dot-src');
-    if (!source) return 0;
+    const dotSource = map.getSource('dot-src');
+    const ratioSource = map.getSource('ratio-src');
+    if (!dotSource) return;
     
+    const dataset = config.datasets[tileId];
+    if (!dataset) return;
+
     isUpdating = true;
     
     try {
-      console.log('changetile', type);
-
-      const tileHost = config.tileHost;
-      source.setTiles([`${tileHost}/${type}/{z}/{x}/{y}.pbf`]);
+      const { tileHost, ratioHost } = config;
       
-      const ratioSource = map.getSource('ratio-src');
-      if (ratioSource) {
-        ratioSource.setTiles([`${tileHost}/${type}/ratios/{z}/{x}/{y}.pbf`]);
-      }
+      // Dots from wolfiex, ratios from ONS Visual
+      dotSource.setTiles([`${tileHost}/${tileId}/{z}/{x}/{y}.pbf?raw=true`]);
+      ratioSource?.setTiles([`${ratioHost}/${tileId}/ratios/{z}/{x}/{y}.pbf?raw=true`]);
 
-      switch (type) {
-        case 'TS021_ethnic_group_tb_6a_2021':
-          keys = [
-            'Asian, Asian British or Asian Welsh',
-            'Black, Black British, Black Welsh, Caribbean or African',
-            'Mixed or Multiple ethnic groups',
-            'White',
-            'Other ethnic group'
-          ];
-          csum = [11.04, 4.797, 3.48, 100.0, 2.51];
-          bcsum = [11.04, 4.797, 3.48, 100.0, 2.51];
-          break;
+      // Update dot layer with correct source-layer
+      map.removeLayer('dot-data');
+      map.addLayer({
+        id: 'dot-data',
+        type: 'circle',
+        source: 'dot-src',
+        maxzoom: 22,
+        minzoom: 4,
+        'source-layer': dataset.dotLayer,
+        paint: {
+          'circle-radius': dscale * Math.floor(map.getZoom()) ** 0.7,
+          'circle-color': 'white',
+          'circle-opacity': 0.83
+        },
+        filter: ['==', '$type', 'Point']
+      });
 
-        case 'TS045_number_of_cars_5a_2021':
-          keys = [
-            'No cars or vans in household',
-            '1 car or van in household',
-            '2 cars or vans in household',
-            '3 or more cars or vans in household'
-          ];
-          csum = [55.7, 100.0, 63.9, 22.6];
-          bcsum = [55.7, 100.0, 63.9, 22.6];
-          break;
+      // Update poly layer with correct source-layer
+      map.removeLayer('poly-layer');
+      map.addLayer({
+        id: 'poly-layer',
+        type: 'fill',
+        source: 'ratio-src',
+        'source-layer': dataset.ratioLayer,
+        maxzoom: 22,
+        minzoom: 0,
+        paint: {
+          'fill-color': 'rgba(200, 100, 240, 0)',
+          'fill-outline-color': 'rgba(200, 200, 240, 0.1)'
+        }
+      });
 
-        case 'TS059_hours_per_week_worked_3a_2021':
-          keys = [
-            'Part-time: 30 hours or less worked',
-            'Full-time: 31 or more hours worked'
-          ];
-          csum = [42.53, 100.0];
-          bcsum = [42.53, 100.0];
-          break;
-
-        case 'TS005_passports_all_4a_2021':
-          keys = ['UK passport', 'Non-UK passport', 'No passport held'];
-          csum = [100.0, 12.73, 17.53];
-          bcsum = [100.0, 12.73, 17.53];
-          break;
-
-        case 'TS002_legal_partnership_status_3a_2021':
-          keys = [
-            'Married or in a registered civil partnership',
-            'Other marital or civil partnership status'
-          ];
-          csum = [81.2, 100.0];
-          bcsum = [81.2, 100.0];
-          break;
-
-        default:
-          keys = [
-            'Asian, Asian British or Asian Welsh',
-            'Black, Black British, Black Welsh, Caribbean or African',
-            'Mixed or Multiple ethnic groups',
-            'White',
-            'Other ethnic group'
-          ];
-          csum = [11.04, 4.797, 3.48, 100.0, 2.51];
-          bcsum = [11.04, 4.797, 3.48, 100.0, 2.51];
-          break;
-      }
+      // Update keys and ratios from config
+      keys = [...dataset.keys];
+      csum = [...dataset.ratios];
+      bcsum = [...dataset.ratios];
+      colour = colourbase.slice(0, keys.length);
+      keytitle = 'England + Wales';
 
       setTimeout(() => {
-        newpaint(colour);
+        updatePaint();
         isUpdating = false;
       }, 50);
     } catch (err) {
@@ -122,20 +101,20 @@
     }
   }
 
-  function screen() {
-    if (!update || isUpdating) return;
+  // Calculate on-screen ratios
+  function calculateScreenRatios() {
+    if (!usePageAverage || isUpdating || !map) return;
     
     const now = new Date();
     if (now - debounce < 2000) return;
-    
     debounce = now;
     
     try {
-      const c = new Array(keys?.length || 5).fill(0);
+      const c = new Array(keys.length).fill(0);
       const features = map.queryRenderedFeatures({ layers: ['dot-data'] });
-      features.forEach((d) => {
-        if (d.properties.cat !== undefined) {
-          c[d.properties.cat] = (c[d.properties.cat] || 0) + 1;
+      features.forEach((f) => {
+        if (f.properties.cat !== undefined) {
+          c[f.properties.cat] = (c[f.properties.cat] || 0) + 1;
         }
       });
       const mx = Math.max(...c);
@@ -144,7 +123,57 @@
       }
       legend?.classList.remove('loading');
     } catch (err) {
-      console.warn('Screen update error:', err);
+      console.warn('Screen calculation error:', err);
+    }
+  }
+
+  // Update dot colors
+  function updatePaint() {
+    if (!map?.getLayer('dot-data')) return;
+    
+    const matchExpr = ['match', ['get', 'cat']];
+    for (let i = 0; i < keys.length; i++) {
+      matchExpr.push(i);
+      matchExpr.push(colour[i] || '#ccc');
+    }
+    matchExpr.push('#ccc');
+    
+    map.setPaintProperty('dot-data', 'circle-color', matchExpr);
+  }
+
+  // Handle postcode search
+  async function handlePostcodeSearch(evt) {
+    const postcode = evt.target.value.toUpperCase().trim();
+    if (postcode.length < 5) return;
+    
+    try {
+      const res = await fetch(`https://api.postcodes.io/postcodes/${postcode}`);
+      const data = await res.json();
+      
+      if (data.result) {
+        map.flyTo({
+          center: [data.result.longitude, data.result.latitude],
+          zoom: 14
+        });
+      } else {
+        alert('Postcode not found');
+      }
+    } catch {
+      alert('Error searching postcode');
+    }
+  }
+
+  // Handle point size change
+  function handlePointSizeChange() {
+    if (map?.getLayer('dot-data')) {
+      map.setPaintProperty('dot-data', 'circle-radius', dscale * Math.floor(map.getZoom()) ** 0.7);
+    }
+  }
+
+  // Handle legend title click - fly to selected area
+  function handleLegendClick() {
+    if (keycentre) {
+      map.flyTo({ center: keycentre, zoom: 14 });
     }
   }
 
@@ -153,194 +182,179 @@
     const res = await fetch('/config.json');
     config = await res.json();
 
-    document.body.style.opacity = 1;
+    // Build dataset options from config
+    datasets = Object.entries(config.datasets).map(([id, data]) => ({
+      id,
+      text: data.name
+    }));
+    
+    // Set default tile
+    tile = Object.keys(config.datasets)[0];
 
+    document.body.style.opacity = 1;
     colour = [...colourbase];
     legend = document.querySelector('.legend');
 
+    // Initialize with default dataset
+    const dataset = config.datasets[tile];
+    keys = [...dataset.keys];
+    csum = [...dataset.ratios];
+    bcsum = [...dataset.ratios];
+
+    // Wait for map to load
     const checkMap = setInterval(() => {
-      if (map && map.loaded()) {
+      if (map?.loaded()) {
         clearInterval(checkMap);
         
-        changetile(tile).then(() => newpaint());
+        // Initial paint
+        updatePaint();
 
-        map.on('moveend', () => {
-          if (update) legend?.classList.add('loading');
-        });
-
-        const people = document.getElementById('people');
-
+        // Update people per dot on zoom
+        const peopleEl = document.getElementById('people');
         map.on('zoomend', () => {
-          let z = Math.floor(map.getZoom());
-          if (people) {
-            people.innerText = Math.ceil(2 ** (14 - z));
-          }
-
+          const z = Math.floor(map.getZoom());
+          if (peopleEl) peopleEl.innerText = Math.ceil(2 ** (14 - z));
           if (map.getLayer('dot-data')) {
             map.setPaintProperty('dot-data', 'circle-radius', dscale * z ** 0.7);
           }
-
-          if (update) legend?.classList.add('loading');
+          if (usePageAverage) legend?.classList.add('loading');
         });
 
-        map.on('dblclick', 'poly-layer', function (e) {
+        map.on('moveend', () => {
+          if (usePageAverage) legend?.classList.add('loading');
+        });
+
+        // Double-click to select output area
+        map.on('dblclick', 'poly-layer', (e) => {
+          if (!e.features?.length) return;
+          const props = e.features[0].properties;
           keycentre = e.lngLat.toArray();
+          
           if (map.getZoom() < 12) map.setZoom(12);
 
-          const props = e.features[0].properties;
-          const c = JSON.parse(props.ratios);
-          const mx = Math.max(...c);
-          csum = c.map((d) => (100 * d) / mx);
-          const npeople = c.reduce((a, b) => a + b, 0);
-          keytitle = 'Output Area: ' + props.OA21CD + '  (' + npeople + ' people)';
+          try {
+            const ratios = JSON.parse(props.ratios);
+            const mx = Math.max(...ratios);
+            csum = ratios.map((d) => (100 * d) / mx);
+            const total = ratios.reduce((a, b) => a + b, 0);
+            keytitle = `Output Area: ${props.OA21CD} (${total.toLocaleString()} people)`;
 
-          map.setPaintProperty('poly-layer', 'fill-outline-color', [
-            'match',
-            ['get', 'OA21CD'],
-            props.OA21CD,
-            'red',
-            'rgba(200, 200, 240, 0.1)'
-          ]);
+            map.setPaintProperty('poly-layer', 'fill-outline-color', [
+              'match', ['get', 'OA21CD'],
+              props.OA21CD, 'red',
+              'rgba(200, 200, 240, 0.1)'
+            ]);
+          } catch {}
         });
 
-        document
-          .getElementById('legendtitle')
-          ?.addEventListener('click', () => map.flyTo({ center: keycentre, zoom: 14 }));
-
-        map.on('idle', screen);
+        map.on('idle', calculateScreenRatios);
       }
     }, 100);
 
     return () => clearInterval(checkMap);
   });
 
-  function newpaint() {
-    if (!map || !map.getLayer('dot-data')) return;
-    
-    map.setPaintProperty('dot-data', 'circle-color', [
-      'match',
-      ['get', 'cat'],
-      0,
-      colour[0],
-      1,
-      colour[1],
-      2,
-      colour[2],
-      3,
-      colour[3],
-      4,
-      colour[4],
-      '#ccc'
-    ]);
-  }
-
-  $: if (map && map.loaded() && config) {
-    changetile(tile);
-  }
-
-  $: try {
-    if (map && map.getLayer('dot-data')) {
-      newpaint(colour);
-    }
-  } catch (err) {}
-
-  async function handlePostcodeSearch(evt) {
-    const psc = await fetch(
-      `https://api.postcodes.io/postcodes/${evt.target.value.toUpperCase()}`
-    )
-      .then((d) => d.json())
-      .then((d) => d.result);
-
-    if (!psc) {
-      alert('Incorrect Postcode');
-      return;
-    }
-
-    map.flyTo({
-      center: [psc.longitude, psc.latitude],
-      zoom: 14
-    });
-  }
-
-  function handleSliderChange() {
-    if (map && map.getLayer('dot-data')) {
-      map.setPaintProperty(
-        'dot-data',
-        'circle-radius',
-        dscale * Math.floor(map.getZoom()) ** 0.7
-      );
+  // Reactivity - only change tiles when dropdown changes
+  function handleTileChange(e) {
+    const newTile = e.detail.selectedId;
+    if (newTile && newTile !== tile) {
+      tile = newTile;
+      changetile(tile);
     }
   }
 
-  function handleLegendClick() {
-    if (keycentre) {
-      map.flyTo({ center: keycentre, zoom: 14 });
-    }
+  $: if (map?.getLayer('dot-data') && colour) updatePaint();
+  
+  $: if (usePageAverage && legend) {
+    legend.classList.add('loading');
+    calculateScreenRatios();
+  } else if (!usePageAverage && legend && config?.datasets?.[tile]) {
+    const dataset = config.datasets[tile];
+    csum = [...dataset.ratios];
+    keytitle = 'England + Wales';
+    legend.classList.remove('loading');
   }
 </script>
 
 <MapComponent bind:map {config} />
 
-<div class="menu">
+<!-- Controls Panel -->
+<div class="menu" class:hidden={!showMenu}>
+  <button class="close-btn" on:click={() => showMenu = false}>×</button>
   <h1>Census Dot Density Map</h1>
-  <br />
-  <span class="label-text">Select Table</span>
-  <br />
+  
+  <div class="control-group">
+    <Dropdown items={datasets} selectedId={tile} on:select={handleTileChange} />
+  </div>
 
-  <Dropdown items={names} bind:selectedId={tile} />
-
-  <br />
-  <span class="label-text">Find Postcode</span>
-  <br />
-  <Search size="sm" on:change={handlePostcodeSearch} />
+  <div class="control-group">
+    <Search size="sm" on:change={handlePostcodeSearch} placeholder="Find postcode..." />
+  </div>
 
   <p class="info-text">
-    1 dot = <span id="people"></span> people
+    <strong>1 dot</strong> = <span id="people">16</span> people
   </p>
 </div>
 
-<div id="instruct">
-  <a
-    href="https://scribehow.com/shared/Prototype_Dot_Density_Map__yreqzD5ISB6EQr2IU9FWbg"
-  >
-    Usage Instructions.
+<!-- Instructions & Point Size -->
+<div id="instruct" class:hidden={!showInstruct}>
+  <button class="close-btn" on:click={() => showInstruct = false}>×</button>
+  <a href="https://scribehow.com/shared/Prototype_Dot_Density_Map__yreqzD5ISB6EQr2IU9FWbg" target="_blank">
+    📖 Instructions
   </a>
-  <Slider
-    ariaLabelInput="Point size slider"
-    id="slider"
-    labelText=""
-    max={0.2}
-    min={0.04}
-    step={0.01}
-    maxLabel="Point Size"
-    minLabel=" "
-    bind:value={dscale}
-    on:change={handleSliderChange}
-    hideTextInput
-    light={false}
-  />
+  
+  <div class="slider-group">
+    <Slider
+      labelText="Point Size"
+      min={0.04}
+      max={0.2}
+      step={0.01}
+      bind:value={dscale}
+      on:change={handlePointSizeChange}
+      hideTextInput
+    />
+  </div>
 </div>
 
-<!-- LEGEND BARS -->
-<div class="legend">
+<!-- Legend -->
+<div class="legend" class:hidden={!showLegend}>
+  <button class="close-btn" on:click={() => showLegend = false}>×</button>
+  <div class="legend-header">
+    <Toggle
+      size="sm"
+      labelText="Page average"
+      bind:toggled={usePageAverage}
+    />
+  </div>
+
   <button
     type="button"
-    id="legendtitle"
     class="legend-title-btn"
     on:click={handleLegendClick}
+    title={keycentre ? 'Click to fly to this area' : ''}
   >
-    {!update ? keytitle : 'Page Average'}
+    {keytitle}
   </button>
-  <br /><br />
+
   <Categories {keys} bind:colour {colourbase} {csum} {bcsum} />
 </div>
 
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-<link
-  href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100&display=swap"
-  rel="stylesheet"
-/>
+<!-- Show buttons when panels are hidden -->
+{#if !showMenu}
+  <button class="show-btn top-left" on:click={() => showMenu = true}>☰</button>
+{/if}
+{#if !showInstruct}
+  <button class="show-btn bottom-left" on:click={() => showInstruct = true}>⚙</button>
+{/if}
+{#if !showLegend}
+  <button class="show-btn bottom-right" on:click={() => showLegend = true}>◧</button>
+{/if}
+
+<svelte:head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+</svelte:head>
 
 <style>
   :global(body) {
@@ -349,27 +363,7 @@
     font-family: 'IBM Plex Sans', sans-serif;
     overflow: hidden;
     opacity: 0;
-    -moz-transition: opacity 3.5s;
-    -webkit-transition: opacity 3.5s;
-    -o-transition: opacity 3.5s;
-    transition: opacity 3.5s;
-  }
-
-  .label-text {
-    display: block;
-    height: 0.35em;
-    font-size: inherit;
-  }
-
-  .info-text {
-    display: block;
-    padding-top: 2px;
-    padding-bottom: 1em;
-    margin: 0;
-  }
-
-  h1 {
-    font-size: large;
+    transition: opacity 0.5s ease-in;
   }
 
   :global(#map) {
@@ -380,61 +374,156 @@
     width: 100%;
   }
 
-  .legend {
-    z-index: 99999999;
-    position: absolute;
-    display: block;
-    backdrop-filter: blur(3px) saturate(0.1);
-    padding: 5px;
-    background-color: #444;
-    opacity: 80%;
-    border-radius: 3%;
-    margin: auto;
-    bottom: 4px;
-    align-content: center;
-    right: 4px;
+  h1 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0 0 0.75rem 0;
   }
 
-  #instruct {
-    z-index: 99999999;
+  .hidden {
+    display: none !important;
+  }
+
+  .close-btn {
     position: absolute;
-    display: block;
-    font-size: 110%;
-    backdrop-filter: blur(3px);
-    border-radius: 3%;
-    padding: 5px;
-    bottom: 4px;
-    align-content: center;
-    left: 4px;
+    top: 4px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .close-btn:hover {
+    color: white;
+  }
+
+  .show-btn {
+    position: absolute;
+    z-index: 1000;
+    background: rgba(40, 40, 40, 0.95);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+
+  .show-btn:hover {
+    background: rgba(60, 60, 60, 0.95);
+  }
+
+  .show-btn.top-left {
+    top: 10px;
+    left: 10px;
+  }
+
+  .show-btn.bottom-left {
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .show-btn.bottom-right {
+    bottom: 10px;
+    right: 10px;
   }
 
   .menu {
-    z-index: 99999999;
     position: absolute;
-    display: block;
-    backdrop-filter: blur(3px) saturate(0.1);
-    padding: 5px;
-    background-color: #444;
-    opacity: 80%;
-    border-radius: 3%;
-    margin: auto;
-    top: 4px;
-    align-content: center;
-    left: 4px;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    background: rgba(40, 40, 40, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: white;
+    min-width: 220px;
+  }
+
+  .control-group {
+    margin-bottom: 12px;
+  }
+
+  .info-text {
+    font-size: 0.85rem;
+    margin: 8px 0 0 0;
+  }
+
+  #instruct {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 1000;
+    background: rgba(40, 40, 40, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.85rem;
+  }
+
+  #instruct a {
+    color: #7eb8ff;
+    text-decoration: none;
+  }
+
+  #instruct a:hover {
+    text-decoration: underline;
+  }
+
+  .slider-group {
+    margin-top: 10px;
+  }
+
+  .legend {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: rgba(40, 40, 40, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: white;
+    min-width: 280px;
+  }
+
+  .legend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .legend-title-btn {
-    float: right;
-    margin: auto;
-    font-size: medium;
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 500;
     background: none;
     border: none;
-    color: inherit;
+    color: white;
+    padding: 4px 0;
     cursor: pointer;
-    padding: 0;
+    margin-bottom: 8px;
   }
 
   .legend-title-btn:hover {
-    color: dodgerblue;
+    color: #7eb8ff;
+  }
+
+  :global(.legend.loading .bx--progress-bar__bar) {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
   }
 </style>
