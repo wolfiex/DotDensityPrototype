@@ -39,18 +39,26 @@
     map.on('load', function () {
       if (!config) return;
       
-      const { tileHost, ratioHost, datasets } = config;
+      const { tileHost, datasets } = config;
       const defaultTile = Object.keys(datasets)[0];
       const dataset = datasets[defaultTile];
 
-      // Ratio/polygon source - from ONS Visual
+      // Dots source - local tiles
+      map.addSource('dot-src', {
+        type: 'vector',
+        maxzoom: 14,
+        minzoom: 6,
+        tiles: [`${tileHost}/${defaultTile}/{z}/{x}/{y}.pbf`]
+      });
+
+      // Ratio/polygon source - local tiles (same source, ratios subfolder)
       map.addSource('ratio-src', {
         type: 'vector',
         maxzoom: 13,
-        tiles: [`${ratioHost}/${defaultTile}/ratios/{z}/{x}/{y}.pbf?raw=true`]
+        tiles: [`${tileHost}/${defaultTile}/ratios/{z}/{x}/{y}.pbf`]
       });
 
-      // Polygon layer
+      // Polygon layer (for double-click interaction)
       map.addLayer({
         id: 'poly-layer',
         type: 'fill',
@@ -62,14 +70,6 @@
           'fill-color': 'rgba(200, 100, 240, 0)',
           'fill-outline-color': 'rgba(200, 200, 240, 0.1)'
         }
-      });
-
-      // Dots source - from wolfiex
-      map.addSource('dot-src', {
-        type: 'vector',
-        maxzoom: 14,
-        minzoom: 6,
-        tiles: [`${tileHost}/${defaultTile}/{z}/{x}/{y}.pbf?raw=true`]
       });
 
       // Dots layer

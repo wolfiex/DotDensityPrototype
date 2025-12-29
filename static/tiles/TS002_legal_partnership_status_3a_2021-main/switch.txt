@@ -1,0 +1,7 @@
+
+    case "TS002_legal_partnership_status_3a_2021":
+        keys = ['Married or in a registered civil partnership', 'Other marital or civil partnership status']
+        csum = [81.2, 100.0]
+        bcsum = [81.2, 100.0]
+        break;
+    

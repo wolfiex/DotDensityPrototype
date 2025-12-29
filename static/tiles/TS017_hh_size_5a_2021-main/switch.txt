@@ -1,0 +1,7 @@
+
+    case "TS017_hh_size_5a_2021":
+        keys = ['1 person in household', '2 people in household', '3 people in household', '4 or more people in household']
+        csum = [88.06, 100.0, 46.6, 57.62]
+        bcsum = [88.06, 100.0, 46.6, 57.62]
+        break;
+    

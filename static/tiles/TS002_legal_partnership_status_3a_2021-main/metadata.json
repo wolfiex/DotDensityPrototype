@@ -1,0 +1,15 @@
+{
+"name": "../static/TS002_legal_partnership_status_3a_2021",
+"description": "../static/TS002_legal_partnership_status_3a_2021",
+"version": "2",
+"minzoom": "8",
+"maxzoom": "13",
+"center": "-0.197754,51.522414,13",
+"bounds": "-6.412302,49.865084,1.762901,55.810619",
+"type": "overlay",
+"format": "pbf",
+"generator": "tippecanoe v2.15.0",
+"generator_options": "/usr/local/bin/tippecanoe -f -l TS002_legal_partnership_status_3a_2021 -r5 --drop-fraction-as-needed --no-tile-compression --no-tile-size-limit --no-feature-limit -P '--output-to-directory=../static/TS002_legal_partnership_status_3a_2021' -zg -B13 -Z8 temp/TS002_legal_partnership_status_3a_2021.geojson temp/TS017_hh_size_5a_2021.geojson temp/TS021_ethnic_group_tb_6a_2021.geojson",
+"strategies": "[ {  }, {  }, {  }, {  }, {  }, {  }, {  }, {  }, { \"dropped_by_rate\": 147074038 }, { \"dropped_by_rate\": 144958317 }, { \"dropped_by_rate\": 142587605 }, { \"dropped_by_rate\": 137773177 }, { \"dropped_by_rate\": 114912139 }, {  } ]",
+"json": "{\"vector_layers\": [ { \"id\": \"TS002_legal_partnership_status_3a_2021\", \"description\": \"\", \"minzoom\": 8, \"maxzoom\": 13, \"fields\": {\"cat\": \"Number\"} } ],\"tilestats\": {\"layerCount\": 1,\"layers\": [{\"layer\": \"TS002_legal_partnership_status_3a_2021\",\"count\": 132948119,\"geometry\": \"Point\",\"attributeCount\": 1,\"attributes\": [{\"attribute\": \"cat\",\"count\": 5,\"type\": \"number\",\"values\": [0,1,2,3,4],\"min\": 0,\"max\": 4}]}]}}"
+}

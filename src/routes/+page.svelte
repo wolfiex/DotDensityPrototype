@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import MapComponent from './MapComponent.svelte';
   import Categories from './Categories.svelte';
+  import AtomicLoader from '$lib/components/AtomicLoader.svelte';
   import { Dropdown, Search, Slider, Toggle } from 'carbon-components-svelte';
   import 'carbon-components-svelte/css/g100.css';
 
@@ -32,6 +33,16 @@
   // Derived from config
   let datasets = [];
 
+  // Initialize dataset
+  function initDataset(tileId) {
+    if (!config?.datasets?.[tileId]) return;
+    const dataset = config.datasets[tileId];
+    keys = [...dataset.keys];
+    bcsum = [...dataset.ratios];
+    csum = [...dataset.ratios];
+    colour = colourbase.slice(0, keys.length);
+  }
+
   // Change tile dataset
   async function changetile(tileId) {
     if (!map || isUpdating || !config || !tileId) return;
@@ -46,13 +57,12 @@
     isUpdating = true;
     
     try {
-      const { tileHost, ratioHost } = config;
+      const { tileHost } = config;
       
-      // Dots from wolfiex, ratios from ONS Visual
-      dotSource.setTiles([`${tileHost}/${tileId}/{z}/{x}/{y}.pbf?raw=true`]);
-      ratioSource?.setTiles([`${ratioHost}/${tileId}/ratios/{z}/{x}/{y}.pbf?raw=true`]);
+      // Local tiles - no ?raw=true needed
+      dotSource.setTiles([`${tileHost}/${tileId}/{z}/{x}/{y}.pbf`]);
+      ratioSource?.setTiles([`${tileHost}/${tileId}/ratios/{z}/{x}/{y}.pbf`]);
 
-      // Update dot layer with correct source-layer
       map.removeLayer('dot-data');
       map.addLayer({
         id: 'dot-data',
@@ -69,7 +79,6 @@
         filter: ['==', '$type', 'Point']
       });
 
-      // Update poly layer with correct source-layer
       map.removeLayer('poly-layer');
       map.addLayer({
         id: 'poly-layer',
@@ -84,12 +93,9 @@
         }
       });
 
-      // Update keys and ratios from config
-      keys = [...dataset.keys];
-      csum = [...dataset.ratios];
-      bcsum = [...dataset.ratios];
-      colour = colourbase.slice(0, keys.length);
+      initDataset(tileId);
       keytitle = 'England + Wales';
+      keycentre = false;
 
       setTimeout(() => {
         updatePaint();
@@ -170,7 +176,7 @@
     }
   }
 
-  // Handle legend title click - fly to selected area
+  // Handle legend title click
   function handleLegendClick() {
     if (keycentre) {
       map.flyTo({ center: keycentre, zoom: 14 });
@@ -178,38 +184,27 @@
   }
 
   onMount(async () => {
-    // Load config
     const res = await fetch('/config.json');
     config = await res.json();
 
-    // Build dataset options from config
     datasets = Object.entries(config.datasets).map(([id, data]) => ({
       id,
       text: data.name
     }));
     
-    // Set default tile
     tile = Object.keys(config.datasets)[0];
 
-    document.body.style.opacity = 1;
     colour = [...colourbase];
     legend = document.querySelector('.legend');
 
-    // Initialize with default dataset
-    const dataset = config.datasets[tile];
-    keys = [...dataset.keys];
-    csum = [...dataset.ratios];
-    bcsum = [...dataset.ratios];
+    initDataset(tile);
 
-    // Wait for map to load
     const checkMap = setInterval(() => {
       if (map?.loaded()) {
         clearInterval(checkMap);
         
-        // Initial paint
         updatePaint();
 
-        // Update people per dot on zoom
         const peopleEl = document.getElementById('people');
         map.on('zoomend', () => {
           const z = Math.floor(map.getZoom());
@@ -224,7 +219,6 @@
           if (usePageAverage) legend?.classList.add('loading');
         });
 
-        // Double-click to select output area
         map.on('dblclick', 'poly-layer', (e) => {
           if (!e.features?.length) return;
           const props = e.features[0].properties;
@@ -254,7 +248,6 @@
     return () => clearInterval(checkMap);
   });
 
-  // Reactivity - only change tiles when dropdown changes
   function handleTileChange(e) {
     const newTile = e.detail.selectedId;
     if (newTile && newTile !== tile) {
@@ -276,6 +269,8 @@
   }
 </script>
 
+<AtomicLoader backgroundColor="#1a1a2e" />
+
 <MapComponent bind:map {config} />
 
 <!-- Controls Panel -->
@@ -284,15 +279,21 @@
   <h1>Census Dot Density Map</h1>
   
   <div class="control-group">
+    <span class="label-text">Select Table</span>
     <Dropdown items={datasets} selectedId={tile} on:select={handleTileChange} />
   </div>
 
   <div class="control-group">
-    <Search size="sm" on:change={handlePostcodeSearch} placeholder="Find postcode..." />
+    <span class="label-text">Find Postcode</span>
+    <Search size="sm" on:change={handlePostcodeSearch} placeholder="e.g. SW1A 1AA" />
   </div>
 
   <p class="info-text">
     <strong>1 dot</strong> = <span id="people">16</span> people
+  </p>
+
+  <p class="hint-text">
+    💡 Double-click an area to see its breakdown
   </p>
 </div>
 
@@ -300,7 +301,7 @@
 <div id="instruct" class:hidden={!showInstruct}>
   <button class="close-btn" on:click={() => showInstruct = false}>×</button>
   <a href="https://scribehow.com/shared/Prototype_Dot_Density_Map__yreqzD5ISB6EQr2IU9FWbg" target="_blank">
-    📖 Instructions
+    📖 Usage Instructions
   </a>
   
   <div class="slider-group">
@@ -322,7 +323,7 @@
   <div class="legend-header">
     <Toggle
       size="sm"
-      labelText="Page average"
+      labelText="Use page average"
       bind:toggled={usePageAverage}
     />
   </div>
@@ -337,6 +338,8 @@
   </button>
 
   <Categories {keys} bind:colour {colourbase} {csum} {bcsum} />
+  
+  <p class="legend-hint">Click a category to hide/show it</p>
 </div>
 
 <!-- Show buttons when panels are hidden -->
@@ -362,8 +365,6 @@
     padding: 0;
     font-family: 'IBM Plex Sans', sans-serif;
     overflow: hidden;
-    opacity: 0;
-    transition: opacity 0.5s ease-in;
   }
 
   :global(#map) {
@@ -449,9 +450,22 @@
     margin-bottom: 12px;
   }
 
+  .label-text {
+    display: block;
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-bottom: 4px;
+  }
+
   .info-text {
     font-size: 0.85rem;
-    margin: 8px 0 0 0;
+    margin: 8px 0 4px 0;
+  }
+
+  .hint-text {
+    font-size: 0.7rem;
+    color: #888;
+    margin: 0;
   }
 
   #instruct {
@@ -516,6 +530,13 @@
 
   .legend-title-btn:hover {
     color: #7eb8ff;
+  }
+
+  .legend-hint {
+    font-size: 0.65rem;
+    color: #666;
+    text-align: center;
+    margin: 8px 0 0 0;
   }
 
   :global(.legend.loading .bx--progress-bar__bar) {
