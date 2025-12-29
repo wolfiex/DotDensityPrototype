@@ -3,7 +3,7 @@
   import MapComponent from './MapComponent.svelte';
   import Categories from './Categories.svelte';
   import AtomicLoader from '$lib/components/AtomicLoader.svelte';
-  import { Dropdown, Search, Slider, Toggle } from 'carbon-components-svelte';
+  import { Dropdown, Search } from 'carbon-components-svelte';
   import 'carbon-components-svelte/css/g100.css';
 
   // Color palette
@@ -27,7 +27,6 @@
 
   // Panel visibility
   let showMenu = true;
-  let showInstruct = true;
   let showLegend = true;
 
   // Derived from config
@@ -59,11 +58,12 @@
     try {
       const { tileHost } = config;
       
-      // Local tiles - no ?raw=true needed
       dotSource.setTiles([`${tileHost}/${tileId}/{z}/{x}/{y}.pbf`]);
       ratioSource?.setTiles([`${tileHost}/${tileId}/ratios/{z}/{x}/{y}.pbf`]);
 
       map.removeLayer('dot-data');
+      map.removeLayer('poly-layer');
+      
       map.addLayer({
         id: 'dot-data',
         type: 'circle',
@@ -79,7 +79,6 @@
         filter: ['==', '$type', 'Point']
       });
 
-      map.removeLayer('poly-layer');
       map.addLayer({
         id: 'poly-layer',
         type: 'fill',
@@ -88,7 +87,7 @@
         maxzoom: 22,
         minzoom: 0,
         paint: {
-          'fill-color': 'rgba(200, 100, 240, 0)',
+          'fill-color': 'rgba(0, 0, 0, 0)',
           'fill-outline-color': 'rgba(200, 200, 240, 0.1)'
         }
       });
@@ -219,9 +218,16 @@
           if (usePageAverage) legend?.classList.add('loading');
         });
 
+        // Double-click to select output area
         map.on('dblclick', 'poly-layer', (e) => {
-          if (!e.features?.length) return;
+          console.log('Double-click detected!', e.features);
+          if (!e.features?.length) {
+            console.log('No features at click location');
+            return;
+          }
+          
           const props = e.features[0].properties;
+          console.log('Feature props:', props);
           keycentre = e.lngLat.toArray();
           
           if (map.getZoom() < 12) map.setZoom(12);
@@ -238,7 +244,16 @@
               props.OA21CD, 'red',
               'rgba(200, 200, 240, 0.1)'
             ]);
-          } catch {}
+          } catch (err) {
+            console.error('Error parsing ratios:', err);
+          }
+        });
+
+        // Also listen for general double-clicks to debug
+        map.on('dblclick', (e) => {
+          console.log('General dblclick at:', e.lngLat);
+          const features = map.queryRenderedFeatures(e.point, { layers: ['poly-layer'] });
+          console.log('Features at point:', features.length);
         });
 
         map.on('idle', calculateScreenRatios);
@@ -273,60 +288,64 @@
 
 <MapComponent bind:map {config} />
 
-<!-- Controls Panel -->
+<!-- Top Left: Controls -->
 <div class="menu" class:hidden={!showMenu}>
   <button class="close-btn" on:click={() => showMenu = false}>×</button>
-  <h1>Census Dot Density Map</h1>
+  
+  <a href="https://datalegrey.sa" target="_blank" class="logo-link">
+    <svg class="logo" viewBox="0 0 100 100" width="32" height="32">
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f97316" />
+          <stop offset="100%" style="stop-color:#ea580c" />
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="12" fill="#0c0c0c"/>
+      <text x="50" y="62" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="url(#logoGrad)" text-anchor="middle">D</text>
+    </svg>
+    <span>Census Dots</span>
+  </a>
   
   <div class="control-group">
-    <span class="label-text">Select Table</span>
-    <Dropdown items={datasets} selectedId={tile} on:select={handleTileChange} />
+    <Dropdown items={datasets} selectedId={tile} on:select={handleTileChange} size="sm" />
   </div>
 
   <div class="control-group">
-    <span class="label-text">Find Postcode</span>
-    <Search size="sm" on:change={handlePostcodeSearch} placeholder="e.g. SW1A 1AA" />
+    <Search size="sm" on:change={handlePostcodeSearch} placeholder="Search postcode..." />
   </div>
 
   <p class="info-text">
     <strong>1 dot</strong> = <span id="people">16</span> people
   </p>
 
-  <p class="hint-text">
-    💡 Double-click an area to see its breakdown
-  </p>
+  <p class="hint-text">💡 Double-click an area to see its breakdown</p>
 </div>
 
-<!-- Instructions & Point Size -->
-<div id="instruct" class:hidden={!showInstruct}>
-  <button class="close-btn" on:click={() => showInstruct = false}>×</button>
-  <a href="https://scribehow.com/shared/Prototype_Dot_Density_Map__yreqzD5ISB6EQr2IU9FWbg" target="_blank">
-    📖 Usage Instructions
-  </a>
-  
-  <div class="slider-group">
-    <Slider
-      labelText="Point Size"
-      min={0.04}
-      max={0.2}
-      step={0.01}
+<!-- Top Right: Settings -->
+<div class="settings">
+  <div class="setting-row">
+    <span class="setting-label">Point size</span>
+    <input 
+      type="range" 
+      min="0.04" 
+      max="0.2" 
+      step="0.01" 
       bind:value={dscale}
-      on:change={handlePointSizeChange}
-      hideTextInput
+      on:input={handlePointSizeChange}
     />
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Page average</span>
+    <label class="toggle">
+      <input type="checkbox" bind:checked={usePageAverage} />
+      <span class="toggle-slider"></span>
+    </label>
   </div>
 </div>
 
-<!-- Legend -->
+<!-- Bottom Right: Legend -->
 <div class="legend" class:hidden={!showLegend}>
   <button class="close-btn" on:click={() => showLegend = false}>×</button>
-  <div class="legend-header">
-    <Toggle
-      size="sm"
-      labelText="Use page average"
-      bind:toggled={usePageAverage}
-    />
-  </div>
 
   <button
     type="button"
@@ -339,15 +358,12 @@
 
   <Categories {keys} bind:colour {colourbase} {csum} {bcsum} />
   
-  <p class="legend-hint">Click a category to hide/show it</p>
+  <p class="legend-hint">Click category to toggle</p>
 </div>
 
 <!-- Show buttons when panels are hidden -->
 {#if !showMenu}
   <button class="show-btn top-left" on:click={() => showMenu = true}>☰</button>
-{/if}
-{#if !showInstruct}
-  <button class="show-btn bottom-left" on:click={() => showInstruct = true}>⚙</button>
 {/if}
 {#if !showLegend}
   <button class="show-btn bottom-right" on:click={() => showLegend = true}>◧</button>
@@ -375,24 +391,18 @@
     width: 100%;
   }
 
-  h1 {
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin: 0 0 0.75rem 0;
-  }
-
   .hidden {
     display: none !important;
   }
 
   .close-btn {
     position: absolute;
-    top: 4px;
-    right: 8px;
+    top: 6px;
+    right: 10px;
     background: none;
     border: none;
-    color: #888;
-    font-size: 1.2rem;
+    color: #666;
+    font-size: 1.1rem;
     cursor: pointer;
     padding: 0;
     line-height: 1;
@@ -405,26 +415,21 @@
   .show-btn {
     position: absolute;
     z-index: 1000;
-    background: rgba(40, 40, 40, 0.95);
+    background: rgba(30, 30, 30, 0.9);
     border: none;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     cursor: pointer;
     padding: 8px 12px;
     border-radius: 6px;
   }
 
   .show-btn:hover {
-    background: rgba(60, 60, 60, 0.95);
+    background: rgba(50, 50, 50, 0.95);
   }
 
   .show-btn.top-left {
     top: 10px;
-    left: 10px;
-  }
-
-  .show-btn.bottom-left {
-    bottom: 10px;
     left: 10px;
   }
 
@@ -433,110 +438,188 @@
     right: 10px;
   }
 
+  /* Top Left Menu */
   .menu {
     position: absolute;
     top: 10px;
     left: 10px;
     z-index: 1000;
-    background: rgba(40, 40, 40, 0.95);
-    backdrop-filter: blur(8px);
-    padding: 12px 16px;
-    border-radius: 8px;
+    background: rgba(30, 30, 30, 0.92);
+    backdrop-filter: blur(10px);
+    padding: 14px 16px;
+    border-radius: 10px;
     color: white;
-    min-width: 220px;
+    min-width: 200px;
+  }
+
+  .logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: white;
+    margin-bottom: 14px;
+  }
+
+  .logo-link:hover {
+    opacity: 0.85;
+  }
+
+  .logo-link span {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .logo {
+    border-radius: 6px;
   }
 
   .control-group {
-    margin-bottom: 12px;
-  }
-
-  .label-text {
-    display: block;
-    font-size: 0.75rem;
-    color: #aaa;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
   }
 
   .info-text {
-    font-size: 0.85rem;
-    margin: 8px 0 4px 0;
+    font-size: 0.8rem;
+    color: #999;
+    margin: 6px 0 0 0;
   }
 
   .hint-text {
     font-size: 0.7rem;
-    color: #888;
-    margin: 0;
+    color: #666;
+    margin: 4px 0 0 0;
   }
 
-  #instruct {
+  /* Top Right Settings */
+  .settings {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
+    top: 10px;
+    right: 10px;
     z-index: 1000;
-    background: rgba(40, 40, 40, 0.95);
-    backdrop-filter: blur(8px);
+    background: rgba(30, 30, 30, 0.92);
+    backdrop-filter: blur(10px);
     padding: 10px 14px;
-    border-radius: 8px;
+    border-radius: 10px;
     color: white;
-    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
-  #instruct a {
-    color: #7eb8ff;
-    text-decoration: none;
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
-  #instruct a:hover {
-    text-decoration: underline;
+  .setting-label {
+    font-size: 0.75rem;
+    color: #aaa;
   }
 
-  .slider-group {
-    margin-top: 10px;
+  .settings input[type="range"] {
+    width: 80px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #444;
+    border-radius: 2px;
+    cursor: pointer;
   }
 
+  .settings input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #f97316;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  /* Custom Toggle */
+  .toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+  }
+
+  .toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #444;
+    transition: 0.2s;
+    border-radius: 20px;
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 50%;
+  }
+
+  .toggle input:checked + .toggle-slider {
+    background-color: #f97316;
+  }
+
+  .toggle input:checked + .toggle-slider:before {
+    transform: translateX(16px);
+  }
+
+  /* Bottom Right Legend */
   .legend {
     position: absolute;
     bottom: 10px;
     right: 10px;
     z-index: 1000;
-    background: rgba(40, 40, 40, 0.95);
-    backdrop-filter: blur(8px);
-    padding: 12px 16px;
-    border-radius: 8px;
+    background: rgba(30, 30, 30, 0.92);
+    backdrop-filter: blur(10px);
+    padding: 12px 14px;
+    border-radius: 10px;
     color: white;
-    min-width: 280px;
-  }
-
-  .legend-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
+    min-width: 260px;
+    max-width: 300px;
   }
 
   .legend-title-btn {
     display: block;
     width: 100%;
     text-align: left;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
     background: none;
     border: none;
     color: white;
-    padding: 4px 0;
+    padding: 2px 0 8px 0;
     cursor: pointer;
-    margin-bottom: 8px;
   }
 
   .legend-title-btn:hover {
-    color: #7eb8ff;
+    color: #f97316;
   }
 
   .legend-hint {
-    font-size: 0.65rem;
-    color: #666;
+    font-size: 0.6rem;
+    color: #555;
     text-align: center;
-    margin: 8px 0 0 0;
+    margin: 10px 0 0 0;
   }
 
   :global(.legend.loading .bx--progress-bar__bar) {
@@ -546,5 +629,14 @@
   @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
+  }
+
+  /* Carbon overrides */
+  :global(.menu .bx--dropdown) {
+    background: rgba(50, 50, 50, 0.8) !important;
+  }
+
+  :global(.menu .bx--search-input) {
+    background: rgba(50, 50, 50, 0.8) !important;
   }
 </style>

@@ -26,9 +26,9 @@
 
     map = window.map = new maplibregl.Map({
       container: 'map',
-      zoom: 8.5,
+      zoom: 6,
       pitch: 5,
-      center: [-0.1360581413730415, 51.514891380499904],
+      center: [-1.5, 53.5],
       style: '/style-dark.json',
       antialias: true,
       fadeDuration: 0
@@ -51,28 +51,15 @@
         tiles: [`${tileHost}/${defaultTile}/{z}/{x}/{y}.pbf`]
       });
 
-      // Ratio/polygon source - local tiles (same source, ratios subfolder)
+      // Ratio/polygon source - local tiles (ratios subfolder)
       map.addSource('ratio-src', {
         type: 'vector',
         maxzoom: 13,
+        minzoom: 0,
         tiles: [`${tileHost}/${defaultTile}/ratios/{z}/{x}/{y}.pbf`]
       });
 
-      // Polygon layer (for double-click interaction)
-      map.addLayer({
-        id: 'poly-layer',
-        type: 'fill',
-        source: 'ratio-src',
-        'source-layer': dataset.ratioLayer,
-        maxzoom: 22,
-        minzoom: 0,
-        paint: {
-          'fill-color': 'rgba(200, 100, 240, 0)',
-          'fill-outline-color': 'rgba(200, 200, 240, 0.1)'
-        }
-      });
-
-      // Dots layer
+      // Dots layer (render first, below polygons)
       map.addLayer({
         id: 'dot-data',
         type: 'circle',
@@ -88,7 +75,21 @@
         filter: ['==', '$type', 'Point']
       });
 
-      map.setZoom(10.3);
+      // Polygon layer (on top for click interaction)
+      map.addLayer({
+        id: 'poly-layer',
+        type: 'fill',
+        source: 'ratio-src',
+        'source-layer': dataset.ratioLayer,
+        maxzoom: 22,
+        minzoom: 0,
+        paint: {
+          'fill-color': 'rgba(0, 0, 0, 0)',
+          'fill-outline-color': 'rgba(200, 200, 240, 0.1)'
+        }
+      });
+      
+      console.log('Map loaded, layers:', map.getStyle().layers.map(l => l.id));
     });
 
     map.on('error', (e) => console.error('MapLibre error:', e.error));
