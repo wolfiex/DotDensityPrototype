@@ -1,11 +1,15 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
 
-/** @type {import('vite').UserConfig} */
-const config = {
-	plugins: [sveltekit()],
-	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}']
-	}
-};
-
-export default config;
+export default defineConfig({
+  plugins: [sveltekit()],
+  server: {
+    port: 3000
+  },
+  build: {
+    sourcemap: true
+  },
+  optimizeDeps: {
+    include: ['maplibre-gl', 'carbon-components-svelte']
+  }
+});

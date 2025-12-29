@@ -1,10 +1,10 @@
 <script>
-  import {onMount} from 'svelte';
+  import { onMount } from 'svelte';
   import MapComponent from './MapComponent.svelte';
   import Categories from './Categories.svelte';
 
   import('carbon-components-svelte/css/g100.css');
-  import {Toggle, Dropdown, Search,Slider} from 'carbon-components-svelte';
+  import { Dropdown, Search, Slider } from 'carbon-components-svelte';
 
   let colourbase = ['ffbe0b', 'fb5607', 'ff006e', '8338ec', '3a86ff'].map(
     (d) => '#' + d
@@ -18,202 +18,205 @@
   let keytitle = 'England + Wales ';
   let keycentre = false;
   let type, keys, tile, bcsum;
-  let dscale = 0.1
+  let dscale = 0.1;
+  let isUpdating = false;
+  let config = null;
 
   tile = 'TS021_ethnic_group_tb_6a_2021';
   colour = [...colourbase];
 
   const names = [
-    {id: 'TS021_ethnic_group_tb_6a_2021', text: 'Ethnicity'},
-    {id: 'TS045_number_of_cars_5a_2021', text: 'Number of Cars'},
-    {id: 'TS002_legal_partnership_status_3a_2021', text: 'Legal Partnership'},
-    {id: 'TS059_hours_per_week_worked_3a_2021', text: 'Work Hours Per Week'},
-    // {id: 'TS017_hh_size_5a_2021', text: 'Household Size'},
-
-
-    //// {id: 'name', text: 'name'},
-    // {id: 'TS003_hh_family_composition_4a_2021', text: 'Family Composition'},
+    { id: 'TS021_ethnic_group_tb_6a_2021', text: 'Ethnicity' },
+    { id: 'TS045_number_of_cars_5a_2021', text: 'Number of Cars' },
+    { id: 'TS002_legal_partnership_status_3a_2021', text: 'Legal Partnership' },
+    { id: 'TS059_hours_per_week_worked_3a_2021', text: 'Work Hours Per Week' }
   ];
 
   async function changetile(type) {
-    // // void
-    // return 0
+    if (!map || isUpdating || !config) return 0;
+    
+    const source = map.getSource('dot-src');
+    if (!source) return 0;
+    
+    isUpdating = true;
+    
+    try {
+      console.log('changetile', type);
 
-    if (!map) return 0;
-    console.log('changetitle', type, map, map.getSource('dot-src'));
-
-    const host = 'https://onsvisual.github.io/';
-    map
-      .getSource('dot-src')
-      .setTiles([host + type + '/{z}/{x}/{y}.pbf?raw=true']);
-    map
-      .getSource('ratio-src')
-      .setTiles([host + type + '/ratios/{z}/{x}/{y}.pbf?raw=true']);
-    // // map.getLayer('dot-data').sourceLayer=type
-
-    switch (type) {
-      case 'TS021_ethnic_group_tb_6a_2021':
-        keys = [
-          'Asian, Asian British or Asian Welsh',
-          'Black, Black British, Black Welsh, Caribbean or African',
-          'Mixed or Multiple ethnic groups',
-          'White',
-          'Other ethnic group',
-        ];
-        csum = [11.04, 4.797, 3.48, 100.0, 2.51];
-        bcsum = [11.04, 4.797, 3.48, 100.0, 2.51];
-        break;
-
-      case "TS045_number_of_cars_5a_2021":
-        keys = ['No cars or vans in household', '1 car or van in household', '2 cars or vans in household', '3 or more cars or vans in household']
-        csum = [55.7, 100.0, 63.9, 22.6]
-        bcsum = [55.7, 100.0, 63.9, 22.6]
-        break;
-
-        
-      case "TS059_hours_per_week_worked_3a_2021":
-        keys = ['Part-time: 30 hours or less worked', 'Full-time: 31 or more hours worked']
-        csum = [42.53, 100.0]
-        bcsum = [42.53, 100.0]
-        break;
-
-
-      case 'TS005_passports_all_4a_2021':
-        keys = ['UK passport', 'Non-UK passport', 'No passport held'];
-        csum = [100.0, 12.73, 17.53];
-        bcsum = [100.0, 12.73, 17.53];
-        break;
-
-        case "TS002_legal_partnership_status_3a_2021":
-        keys = ['Married or in a registered civil partnership', 'Other marital or civil partnership status']
-        csum = [81.2, 100.0]
-        bcsum = [81.2, 100.0]
-        break;
+      const tileHost = config.tileHost;
+      source.setTiles([`${tileHost}/${type}/{z}/{x}/{y}.pbf`]);
       
-        
-      default:
-        type = 'TS021_ethnic_group_tb_6a_2021';
-        keys = [
-          'Asian, Asian British or Asian Welsh',
-          'Black, Black British, Black Welsh, Caribbean or African',
-          'Mixed or Multiple ethnic groups',
-          'White',
-          'Other ethnic group',
-        ];
-        csum = [11.04, 4.797, 3.48, 100.0, 2.51];
-        bcsum = [11.04, 4.797, 3.48, 100.0, 2.51];
-        break;
-    }
+      const ratioSource = map.getSource('ratio-src');
+      if (ratioSource) {
+        ratioSource.setTiles([`${tileHost}/${type}/ratios/{z}/{x}/{y}.pbf`]);
+      }
 
-    newpaint(colour);
+      switch (type) {
+        case 'TS021_ethnic_group_tb_6a_2021':
+          keys = [
+            'Asian, Asian British or Asian Welsh',
+            'Black, Black British, Black Welsh, Caribbean or African',
+            'Mixed or Multiple ethnic groups',
+            'White',
+            'Other ethnic group'
+          ];
+          csum = [11.04, 4.797, 3.48, 100.0, 2.51];
+          bcsum = [11.04, 4.797, 3.48, 100.0, 2.51];
+          break;
+
+        case 'TS045_number_of_cars_5a_2021':
+          keys = [
+            'No cars or vans in household',
+            '1 car or van in household',
+            '2 cars or vans in household',
+            '3 or more cars or vans in household'
+          ];
+          csum = [55.7, 100.0, 63.9, 22.6];
+          bcsum = [55.7, 100.0, 63.9, 22.6];
+          break;
+
+        case 'TS059_hours_per_week_worked_3a_2021':
+          keys = [
+            'Part-time: 30 hours or less worked',
+            'Full-time: 31 or more hours worked'
+          ];
+          csum = [42.53, 100.0];
+          bcsum = [42.53, 100.0];
+          break;
+
+        case 'TS005_passports_all_4a_2021':
+          keys = ['UK passport', 'Non-UK passport', 'No passport held'];
+          csum = [100.0, 12.73, 17.53];
+          bcsum = [100.0, 12.73, 17.53];
+          break;
+
+        case 'TS002_legal_partnership_status_3a_2021':
+          keys = [
+            'Married or in a registered civil partnership',
+            'Other marital or civil partnership status'
+          ];
+          csum = [81.2, 100.0];
+          bcsum = [81.2, 100.0];
+          break;
+
+        default:
+          keys = [
+            'Asian, Asian British or Asian Welsh',
+            'Black, Black British, Black Welsh, Caribbean or African',
+            'Mixed or Multiple ethnic groups',
+            'White',
+            'Other ethnic group'
+          ];
+          csum = [11.04, 4.797, 3.48, 100.0, 2.51];
+          bcsum = [11.04, 4.797, 3.48, 100.0, 2.51];
+          break;
+      }
+
+      setTimeout(() => {
+        newpaint(colour);
+        isUpdating = false;
+      }, 50);
+    } catch (err) {
+      console.error('Error changing tile:', err);
+      isUpdating = false;
+    }
   }
 
-  // const sources = map.style && map.style._sourceCaches;
-  //         for (const id in sources) {
-  //             const source = sources[id];
-  //             const tiles = source._tiles;
-  //             for (const t in tiles) {
-  //                 const tile = tiles[t];
-  //                 if (!(tile.state === 'loaded' || tile.state === 'errored')) return false;
-  //             }
-  //         }
+  function screen() {
+    if (!update || isUpdating) return;
+    
+    const now = new Date();
+    if (now - debounce < 2000) return;
+    
+    debounce = now;
+    
+    try {
+      const c = new Array(keys?.length || 5).fill(0);
+      const features = map.queryRenderedFeatures({ layers: ['dot-data'] });
+      features.forEach((d) => {
+        if (d.properties.cat !== undefined) {
+          c[d.properties.cat] = (c[d.properties.cat] || 0) + 1;
+        }
+      });
+      const mx = Math.max(...c);
+      if (mx > 0) {
+        csum = c.map((d) => (100 * d) / mx);
+      }
+      legend?.classList.remove('loading');
+    } catch (err) {
+      console.warn('Screen update error:', err);
+    }
+  }
 
-  // async function tilesloaded(){
-  // let loading = true
-  // const tiles = map.style.sourceCaches['wdot-src']._tiles
-  // while (loading){
-  //   loading = tiles.length
-  //   for (const t in tiles) {
+  onMount(async () => {
+    // Load config
+    const res = await fetch('/config.json');
+    config = await res.json();
 
-  //                 if (!(tiles[t].state === 'loaded' || tiles[t].state === 'errored')) loading -=1
-  //                 console.log(tiles[t])
-
-  //             }
-
-  // }
-  // return 'loading complete'}
-
-  // await tilesloaded().then(alert)
-
-  // map.style._sourceCaches['wdot-src']
-
-  onMount(() => {
-    // document.body.classList = 'hidden'
-    // document.body.classList = 'visible'
     document.body.style.opacity = 1;
 
     colour = [...colourbase];
     legend = document.querySelector('.legend');
-    map.on('load', () => {
-      changetile(tile).then(newpaint());
-    });
 
-    //  function screen(){
+    const checkMap = setInterval(() => {
+      if (map && map.loaded()) {
+        clearInterval(checkMap);
+        
+        changetile(tile).then(() => newpaint());
 
-    //     if (update){
-    //       csum = [100,100,100,100,100]
-    //       var d = new Date();
-    //       if ( d - debounce > 2000) {
-    //       debounce = d;
-    //       var c = [0,0,0,0,0];
-    //       map.queryRenderedFeatures().forEach(d=>c[d.properties.cat]+=1);
-    //       var mx = Math.max(...c);
-    //       csum = c.map(d=>100.*d/mx);
-    //       legend.classList.remove('loading');
-    //     } else {
+        map.on('moveend', () => {
+          if (update) legend?.classList.add('loading');
+        });
 
-    //     }
+        const people = document.getElementById('people');
 
-    // }}
+        map.on('zoomend', () => {
+          let z = Math.floor(map.getZoom());
+          if (people) {
+            people.innerText = Math.ceil(2 ** (14 - z));
+          }
 
-    map.on('moveend', () => {
-      if (update) legend.classList.add('loading');
-    });
+          if (map.getLayer('dot-data')) {
+            map.setPaintProperty('dot-data', 'circle-radius', dscale * z ** 0.7);
+          }
 
-    const people = document.getElementById('people');
+          if (update) legend?.classList.add('loading');
+        });
 
-    map.on('zoomend', () => {
-      let z = Math.floor(map.getZoom());
-      people.innerText = Math.ceil(2 ** (14 - z));
+        map.on('dblclick', 'poly-layer', function (e) {
+          keycentre = e.lngLat.toArray();
+          if (map.getZoom() < 12) map.setZoom(12);
 
-      // scaling of pooints with zoom
-      map.setPaintProperty('dot-data', 'circle-radius', dscale * z ** 0.7);
+          const props = e.features[0].properties;
+          const c = JSON.parse(props.ratios);
+          const mx = Math.max(...c);
+          csum = c.map((d) => (100 * d) / mx);
+          const npeople = c.reduce((a, b) => a + b, 0);
+          keytitle = 'Output Area: ' + props.OA21CD + '  (' + npeople + ' people)';
 
-      if (update) legend.classList.add('loading');
-    });
+          map.setPaintProperty('poly-layer', 'fill-outline-color', [
+            'match',
+            ['get', 'OA21CD'],
+            props.OA21CD,
+            'red',
+            'rgba(200, 200, 240, 0.1)'
+          ]);
+        });
 
-    map.on('dblclick', 'poly-layer', function (e) {
-      keycentre = e.lngLat.toArray();
-      if (map.getZoom() < 12) map.setZoom(12);
+        document
+          .getElementById('legendtitle')
+          ?.addEventListener('click', () => map.flyTo({ center: keycentre, zoom: 14 }));
 
-      e = e.features[0].properties;
-      var c = JSON.parse(e.ratios);
-      var mx = Math.max(...c);
-      csum = c.map((d) => (100 * d) / mx);
-      var npeople = c.reduce((a, b) => a + b, 0);
-      keytitle = 'Output Area: ' + e.OA21CD + '  (' + npeople + ' people)';
+        map.on('idle', screen);
+      }
+    }, 100);
 
-      map.setPaintProperty('poly-layer', 'fill-outline-color', [
-        'match',
-        ['get', 'OA21CD'],
-        e.OA21CD,
-        'red',
-        'rgba(200, 200, 240, 0.1)',
-      ]);
-    });
-
-    document
-      .getElementById('legendtitle')
-      .addEventListener('click', () =>
-        map.flyTo({center: keycentre, zoom: 14})
-      );
-
-    map.on('idle', screen);
-
-    // map.areTilesLoaded('dot-data')
+    return () => clearInterval(checkMap);
   });
 
   function newpaint() {
+    if (!map || !map.getLayer('dot-data')) return;
+    
     map.setPaintProperty('dot-data', 'circle-color', [
       'match',
       ['get', 'cat'],
@@ -227,94 +230,113 @@
       colour[3],
       4,
       colour[4],
-      '#ccc',
+      '#ccc'
     ]);
   }
 
-  $: changetile(tile);
+  $: if (map && map.loaded() && config) {
+    changetile(tile);
+  }
 
   $: try {
-    newpaint(colour);
+    if (map && map.getLayer('dot-data')) {
+      newpaint(colour);
+    }
   } catch (err) {}
+
+  async function handlePostcodeSearch(evt) {
+    const psc = await fetch(
+      `https://api.postcodes.io/postcodes/${evt.target.value.toUpperCase()}`
+    )
+      .then((d) => d.json())
+      .then((d) => d.result);
+
+    if (!psc) {
+      alert('Incorrect Postcode');
+      return;
+    }
+
+    map.flyTo({
+      center: [psc.longitude, psc.latitude],
+      zoom: 14
+    });
+  }
+
+  function handleSliderChange() {
+    if (map && map.getLayer('dot-data')) {
+      map.setPaintProperty(
+        'dot-data',
+        'circle-radius',
+        dscale * Math.floor(map.getZoom()) ** 0.7
+      );
+    }
+  }
+
+  function handleLegendClick() {
+    if (keycentre) {
+      map.flyTo({ center: keycentre, zoom: 14 });
+    }
+  }
 </script>
 
-<MapComponent bind:map />
+<MapComponent bind:map {config} />
 
 <div class="menu">
   <h1>Census Dot Density Map</h1>
-
-  <!-- <label style='float:left;font-size:small!important;margin-top:1.25em'>Use page avarage: </label> 
-<Toggle size='sm' style='float:right;margin-right:30px' bind:toggled={update} />
-<br>
-<br><br>  -->
   <br />
-  <label> Select Table </label>
+  <span class="label-text">Select Table</span>
   <br />
 
   <Dropdown items={names} bind:selectedId={tile} />
 
- 
-
   <br />
-  <label> Find Postcode </label>
+  <span class="label-text">Find Postcode</span>
   <br />
-  <Search
-    size="sm"
-    on:change={async (evt) => {
-      const psc = await fetch(
-        `https://api.postcodes.io/postcodes/${evt.target.value.toUpperCase()}`
-      )
-        .then((d) => d.json())
-        .then((d) => d.result);
+  <Search size="sm" on:change={handlePostcodeSearch} />
 
-      if (!psc) alert('Incorrect Postcode');
-
-      map.flyTo({
-        center: [psc.longitude, psc.latitude],
-        zoom: 14,
-      });
-    }}
-  />
-
-  
-  <label style="display:block;padding-top:2px;padding-bottom:1em;">
-    1 dot = <span id="people" /> people
-
-  
-  </label
-  > 
+  <p class="info-text">
+    1 dot = <span id="people"></span> people
+  </p>
 </div>
 
 <div id="instruct">
-<a
-  
-  href="https://scribehow.com/shared/Prototype_Dot_Density_Map__yreqzD5ISB6EQr2IU9FWbg"
-  >Usage Instructions.
-</a>
-<Slider
-  ariaLabelInput="Label for slider value"
-  id="slider"
-  labelText=""
-  max={0.2}
-  min={0.04}
-  step=0.01
-  maxLabel='Point Size'
-  minLabel=' '
-  bind:value={dscale}
-  on:change={()=>map.setPaintProperty('dot-data', 'circle-radius', dscale * Math.floor(map.getZoom()) ** 0.7)}
-  hideTextInput light={false} />
-
+  <a
+    href="https://scribehow.com/shared/Prototype_Dot_Density_Map__yreqzD5ISB6EQr2IU9FWbg"
+  >
+    Usage Instructions.
+  </a>
+  <Slider
+    ariaLabelInput="Point size slider"
+    id="slider"
+    labelText=""
+    max={0.2}
+    min={0.04}
+    step={0.01}
+    maxLabel="Point Size"
+    minLabel=" "
+    bind:value={dscale}
+    on:change={handleSliderChange}
+    hideTextInput
+    light={false}
+  />
 </div>
+
 <!-- LEGEND BARS -->
 <div class="legend">
-  <label id="legendtitle" style="float:right;margin:auto;font-size:medium;"
-    >{!update ? keytitle : 'Page Avarage'}
-  </label> <br /><br />
+  <button
+    type="button"
+    id="legendtitle"
+    class="legend-title-btn"
+    on:click={handleLegendClick}
+  >
+    {!update ? keytitle : 'Page Average'}
+  </button>
+  <br /><br />
   <Categories {keys} bind:colour {colourbase} {csum} {bcsum} />
 </div>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 <link
   href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100&display=swap"
   rel="stylesheet"
@@ -333,15 +355,23 @@
     transition: opacity 3.5s;
   }
 
-  label {
-    /* padding-bottom:0!important; */
+  .label-text {
     display: block;
     height: 0.35em;
+    font-size: inherit;
+  }
+
+  .info-text {
+    display: block;
+    padding-top: 2px;
+    padding-bottom: 1em;
+    margin: 0;
   }
 
   h1 {
     font-size: large;
   }
+
   :global(#map) {
     position: absolute;
     top: 0;
@@ -349,6 +379,7 @@
     bottom: 0;
     width: 100%;
   }
+
   .legend {
     z-index: 99999999;
     position: absolute;
@@ -363,6 +394,7 @@
     align-content: center;
     right: 4px;
   }
+
   #instruct {
     z-index: 99999999;
     position: absolute;
@@ -375,6 +407,7 @@
     align-content: center;
     left: 4px;
   }
+
   .menu {
     z-index: 99999999;
     position: absolute;
@@ -390,7 +423,18 @@
     left: 4px;
   }
 
-  #legendtitle:hover {
+  .legend-title-btn {
+    float: right;
+    margin: auto;
+    font-size: medium;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .legend-title-btn:hover {
     color: dodgerblue;
   }
 </style>

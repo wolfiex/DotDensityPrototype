@@ -1,0 +1,6 @@
+{
+  "tileHost": "https://wolfiex.github.io/DotDensityTiles/static",
+  "defaultTile": "TS021_ethnic_group_tb_6a_2021",
+  "sourceLayer": "TS021_ethnic_group_tb_6a_2021",
+  "ratioSourceLayer": "ratio"
+}
