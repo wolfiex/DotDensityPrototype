@@ -67,7 +67,7 @@
       antialias: true,
       fadeDuration: 0,
       minZoom: 8.3,
-      maxZoom: 13.9
+      maxZoom: 18
     });
 
     // Update hash on map move
@@ -113,7 +113,7 @@
       // Dots source - tiles exist from zoom 8-13
       map.addSource('dot-src', {
         type: 'vector',
-        maxzoom: 13,
+        maxzoom: 12,
         minzoom: 8,
         tiles: [dotTileUrl]
       });
@@ -131,8 +131,8 @@
         id: 'dot-data',
         type: 'circle',
         source: 'dot-src',
-        maxzoom: 22,
         minzoom: 8,
+        maxzoom: 22,
         'source-layer': dataset.dotLayer,
         paint: {
           'circle-radius': 0.5,
