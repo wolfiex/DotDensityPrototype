@@ -55,7 +55,7 @@
   let sectionRefs = [];
 
   $: activeIndex = steps.findIndex(s => s.id === activeStepId);
-  $: mapActive = activeStepId === 'product' || activeStepId === 'data';
+  $: mapActive = activeStepId === 'product';
 
   onMount(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -97,16 +97,12 @@
   <!-- ─── Fixed left: visual illustrations ─── -->
   <div class="visual-pane" class:map-active={mapActive}>
 
-    <!-- Chapter I: live map iframe — always in DOM, shown when data step is active -->
+    <!-- Chapter I: London dot density image -->
     <div
       class="visual-slot map-slot"
-      style="opacity:{activeStepId === 'data' ? 1 : 0}; pointer-events:{activeStepId === 'data' ? 'auto' : 'none'};"
+      style="opacity:{activeStepId === 'data' ? 1 : 0}; pointer-events:{activeStepId === 'data' ? 'none' : 'none'};"
     >
-      <iframe
-        src="/#12/51.50740/-0.12760"
-        title="London dot density"
-        class="map-embed"
-      />
+      <img src="/londondot.png" alt="London dot density map" class="chapter-img" />
     </div>
 
     <!-- SVG illustrations (chapters II–V) -->
@@ -374,6 +370,14 @@
   }
 
   /* ── Live map iframe ── */
+  .chapter-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   .map-slot {
     transition: opacity 0.4s ease;
   }
