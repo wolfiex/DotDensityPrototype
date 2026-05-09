@@ -1,3 +1,6 @@
 name = "dotdensityprototype"
 compatibility_date = "2025-01-01"
-pages_build_output_dir = "build"
+
+[assets]
+directory = "./build"
+not_found_handling = "single-page-application"
