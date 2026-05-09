@@ -46,6 +46,7 @@
       title: 'England + Wales, 2021',
       content: `The finished map renders 56 million people across 188,000 output areas — one dot per 16 people at the default zoom. Five colours represent the five ethnicity categories. The national distribution is immediately legible at city scale: predominantly White across most of England and Wales, with Asian, Black, Mixed, and Other populations concentrated in London, Birmingham, Manchester, Bradford, and Leicester.<br><br>The legend updates live as the user clicks, draws, or pans. The data is fixed: a complete snapshot of England and Wales at census day, <strong>21 March 2021</strong>.`,
       rationale: `Dot density is the only technique that simultaneously shows <em>where</em> people live (spatial distribution) and <em>who</em> they are (category proportions) without the area-size bias of a choropleth. Every dot is a real person recorded by the census. The map makes visible patterns that aggregate statistics flatten.`,
+      cta: { label: 'Explore the full map →', href: '/' },
     },
   ];
 
@@ -54,6 +55,7 @@
   let sectionRefs = [];
 
   $: activeIndex = steps.findIndex(s => s.id === activeStepId);
+  $: mapActive = activeStepId === 'product';
 
   onMount(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -90,94 +92,70 @@
 </script>
 
 <!-- ─── Root wrapper ─── -->
-<div class="story-root" style="--accent:{accent}">
+<div class="story-root" style="--accent:{accent}" class:wide-visual={activeStepId === 'data'}>
 
-  <!-- ─── Fixed right: visual illustrations ─── -->
-  <div class="visual-pane">
-    {#each steps as step (step.id)}
+  <!-- ─── Fixed left: visual illustrations ─── -->
+  <div class="visual-pane" class:map-active={mapActive}>
+
+    <!-- SVG / image illustrations (all steps except product) -->
+    {#each steps.filter(s => s.id !== 'product') as step (step.id)}
       {#if step.id === activeStepId}
         <div class="visual-slot" in:fade={{ duration: 350 }} out:fade={{ duration: 200 }}>
 
-          <!-- Chapter I: Census OA table -->
+          <!-- Chapter I: London dot density image -->
           {#if step.id === 'data'}
-            <svg viewBox="0 0 500 340" class="illus" xmlns="http://www.w3.org/2000/svg">
-              <text x="250" y="30" class="illus-title" text-anchor="middle">Output Area — TS021 6a Counts</text>
-              <!-- header row -->
-              <rect x="40" y="48" width="420" height="28" fill="rgba(39,160,204,0.15)" rx="3"/>
-              {#each ['OA Code','Asian','Black','Mixed','White','Other'] as h, hi}
-                <text x={hi === 0 ? 55 : 130 + hi * 62} y="67" class="th">{h}</text>
-              {/each}
-              <!-- data rows -->
-              {#each [
-                ['E00000001','14','6','4','312','3'],
-                ['E00000002','8','42','7','189','5'],
-                ['E00000003','221','18','12','64','9'],
-                ['E00000004','3','2','1','408','2'],
-                ['E00000005','74','61','22','198','11'],
-              ] as row, ri}
-                <rect x="40" y={80 + ri*34} width="420" height="28" fill={ri%2===0 ? 'rgba(255,255,255,0.03)' : 'transparent'} rx="2"/>
-                {#each row as cell, ci}
-                  <text x={ci === 0 ? 55 : 130 + ci * 62} y={98 + ri*34}
-                    class={ci === 0 ? 'td-code' : 'td'}
-                    fill={ci > 0 && parseInt(cell) > 100 ? '#27A0CC' : 'rgba(255,255,255,0.7)'}
-                  >{cell}</text>
-                {/each}
-              {/each}
-              <text x="250" y="300" class="illus-note" text-anchor="middle">188,000 Output Areas · five categories each</text>
-            </svg>
+            <img src="/londondot.png" alt="London dot density map" class="chapter-img" />
 
           <!-- Chapter II: Tile pyramid -->
           {:else if step.id === 'tiles'}
-            <svg viewBox="0 0 500 340" class="illus" xmlns="http://www.w3.org/2000/svg">
-              <text x="250" y="28" class="illus-title" text-anchor="middle">Vector Tile Pyramid</text>
-              <!-- zoom levels -->
-              {#each [{z:8,cols:2,size:80,y:50},{z:10,cols:4,size:48,y:160},{z:12,cols:6,size:32,y:248}] as level}
+            <svg viewBox="0 0 520 380" class="illus" xmlns="http://www.w3.org/2000/svg">
+              <text x="260" y="26" class="illus-title" text-anchor="middle">Vector Tile Pyramid</text>
+              {#each [
+                {z:8,  cols:2, size:88, y:44},
+                {z:10, cols:4, size:52, y:168},
+                {z:12, cols:7, size:34, y:268},
+              ] as level}
                 {#each Array(level.cols) as _,c}
-                  {#each Array(Math.min(level.cols,3)) as _,r}
-                    {@const tx = 250 - (level.cols/2)*level.size + c*level.size + level.size*0.05}
-                    {@const ty = level.y + r*(level.size+2)}
-                    <rect x={tx} y={ty} width={level.size*0.9} height={level.size*0.9}
-                      fill="rgba(255,255,255,0.04)" stroke="rgba(39,160,204,0.35)" stroke-width="1" rx="2"/>
-                    <!-- scatter dots inside tile -->
-                    {#each [0,1,2,3,4,5] as d}
-                      <circle
-                        cx={tx + (level.size*0.1) + Math.abs(Math.sin(c*7+r*13+d*31)*0.8) * level.size * 0.75}
-                        cy={ty + (level.size*0.1) + Math.abs(Math.sin(d*17+c*5+r*11)*0.9) * level.size * 0.75}
-                        r={level.size/24}
-                        fill={['#ffbe0b','#fb5607','#ff006e','#8338ec','#3a86ff'][d % 5]}
-                        opacity="0.8"
-                      />
-                    {/each}
+                  {@const totalW = level.cols * level.size}
+                  {@const tx = 260 - totalW/2 + c * level.size + 2}
+                  {@const ty = level.y}
+                  <rect x={tx} y={ty} width={level.size - 4} height={level.size - 4}
+                    fill="rgba(255,255,255,0.04)" stroke="rgba(39,160,204,0.35)" stroke-width="1" rx="2"/>
+                  {#each [0,1,2,3,4,5,6] as d}
+                    <circle
+                      cx={tx + 4 + Math.abs(Math.sin(c*7+d*31)*0.9) * (level.size-12)}
+                      cy={ty + 4 + Math.abs(Math.sin(d*17+c*5)*0.9) * (level.size-12)}
+                      r={Math.max(1.2, level.size/26)}
+                      fill={['#ffbe0b','#fb5607','#ff006e','#8338ec','#3a86ff'][d % 5]}
+                      opacity="0.75"
+                    />
                   {/each}
                 {/each}
-                <text x="32" y={level.y + level.size * 0.55} class="td-code">z={level.z}</text>
+                <text x="18" y={level.y + level.size/2} class="td-code" dominant-baseline="middle">z={level.z}</text>
+                <text x="502" y={level.y + level.size/2} class="illus-note" text-anchor="end" dominant-baseline="middle">{level.cols * level.cols} tiles</text>
               {/each}
-              <text x="250" y="316" class="illus-note" text-anchor="middle">dots layer + ratios layer · served as .pbf</text>
+              <text x="260" y="358" class="illus-note" text-anchor="middle">dots layer + ratios layer · served as .pbf · zoom 8–14</text>
             </svg>
 
           <!-- Chapter III: Ratio bar chart -->
           {:else if step.id === 'ratios'}
             <svg viewBox="0 0 500 340" class="illus" xmlns="http://www.w3.org/2000/svg">
               <text x="250" y="28" class="illus-title" text-anchor="middle">National vs Local Ratios</text>
-              <!-- legend -->
               <rect x="320" y="44" width="10" height="10" fill="#27A0CC" rx="2"/>
               <text x="336" y="53" class="illus-note" text-anchor="start">National</text>
               <rect x="395" y="44" width="10" height="10" fill="#f97316" rx="2"/>
               <text x="411" y="53" class="illus-note" text-anchor="start">Local OA</text>
-              <!-- bars -->
               {#each [
-                {cat:'White',  nat:100, loc:42,  col:'#8338ec'},
-                {cat:'Asian',  nat:11,  loc:38,  col:'#ffbe0b'},
-                {cat:'Black',  nat:5,   loc:8,   col:'#fb5607'},
-                {cat:'Mixed',  nat:3,   loc:6,   col:'#ff006e'},
-                {cat:'Other',  nat:3,   loc:4,   col:'#3a86ff'},
+                {cat:'White',  nat:100, loc:42},
+                {cat:'Asian',  nat:11,  loc:38},
+                {cat:'Black',  nat:5,   loc:8},
+                {cat:'Mixed',  nat:3,   loc:6},
+                {cat:'Other',  nat:3,   loc:4},
               ] as row, i}
                 {@const barW = 240}
                 {@const y = 72 + i * 50}
                 <text x="48" y={y+14} class="td" text-anchor="end">{row.cat}</text>
-                <!-- national bar -->
                 <rect x="56" y={y} width={row.nat/100 * barW} height="10" fill="#27A0CC" rx="2" opacity="0.7"/>
-                <!-- local bar -->
                 <rect x="56" y={y+14} width={row.loc/100 * barW} height="10" fill="#f97316" rx="2" opacity="0.7"/>
                 <text x={56 + Math.max(row.nat, row.loc)/100 * barW + 6} y={y+10} class="illus-note">{row.nat}</text>
                 <text x={56 + Math.max(row.nat, row.loc)/100 * barW + 6} y={y+24} class="illus-note">{row.loc}</text>
@@ -189,20 +167,16 @@
           {:else if step.id === 'rendering'}
             <svg viewBox="0 0 500 340" class="illus" xmlns="http://www.w3.org/2000/svg">
               <text x="250" y="28" class="illus-title" text-anchor="middle">Radius as Fraction of Viewport</text>
-              <!-- viewport rect -->
               <rect x="60" y="50" width="380" height="220" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" rx="4"/>
-              <!-- dimension arrows -->
               <line x1="60" y1="282" x2="440" y2="282" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
               <text x="250" y="297" class="illus-note" text-anchor="middle">W = viewport width</text>
               <line x1="452" y1="50" x2="452" y2="270" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
               <text x="478" y="168" class="illus-note" text-anchor="middle" transform="rotate(-90 478 168)">H = height</text>
-              <!-- dot cluster with 3 size examples -->
               {#each [
                 {label:'dscale 0.04',r:3,  cx:140, cy:160, col:'rgba(39,160,204,0.6)'},
                 {label:'dscale 0.16',r:8,  cx:250, cy:160, col:'rgba(39,160,204,0.8)'},
                 {label:'dscale 0.40',r:18, cx:360, cy:160, col:'rgba(39,160,204,1)'},
               ] as ex}
-                <!-- dot scatter -->
                 {#each [[-1.8,-1],[0.5,-1.5],[1.2,0.3],[-0.5,1.1],[0.9,1.4],[-1.5,0.6]] as [dx,dy]}
                   <circle cx={ex.cx + dx*ex.r*1.6} cy={ex.cy + dy*ex.r*1.2} r={ex.r} fill={ex.col}/>
                 {/each}
@@ -213,82 +187,59 @@
 
           <!-- Chapter V: Interaction modes -->
           {:else if step.id === 'interactions'}
-            <svg viewBox="0 0 500 340" class="illus" xmlns="http://www.w3.org/2000/svg">
-              <text x="250" y="22" class="illus-title" text-anchor="middle">Three Interaction Modes</text>
-              <!-- mode panels -->
+            <svg viewBox="0 0 500 400" class="illus" xmlns="http://www.w3.org/2000/svg">
+              <text x="250" y="24" class="illus-title" text-anchor="middle">Three Interaction Modes</text>
               {#each [
-                {label:'Click to Inspect', x:30,  accent:'#ff6b6b'},
-                {label:'Freedraw',         x:180, accent:'#f97316'},
-                {label:'Page Average',     x:330, accent:'#27A0CC'},
+                {label:'Click to Inspect', x:18,  accent:'#ff6b6b'},
+                {label:'Freedraw',         x:184, accent:'#f97316'},
+                {label:'Page Average',     x:350, accent:'#27A0CC'},
               ] as mode, mi}
-                <rect x={mode.x} y="35" width="130" height="220" fill="rgba(255,255,255,0.03)" stroke={mode.accent} stroke-opacity="0.3" stroke-width="1" rx="4"/>
-                <text x={mode.x + 65} y="56" class="mode-label" text-anchor="middle" fill={mode.accent}>{mode.label}</text>
-                <!-- dots scattered inside -->
+                <rect x={mode.x} y="36" width="132" height="290" fill="rgba(255,255,255,0.03)" stroke={mode.accent} stroke-opacity="0.3" stroke-width="1" rx="4"/>
+                <text x={mode.x + 66} y="54" class="mode-label" text-anchor="middle" fill={mode.accent}>{mode.label}</text>
                 {#each Array(18) as _, d}
-                  {@const dx = (d % 5) * 22 + mode.x + 12}
-                  {@const dy = Math.floor(d / 5) * 22 + 68}
-                  <circle cx={dx} cy={dy} r="5"
+                  {@const dx = (d % 4) * 26 + mode.x + 14}
+                  {@const dy = Math.floor(d / 4) * 26 + 68}
+                  <circle cx={dx} cy={dy} r="6"
                     fill={['#ffbe0b','#fb5607','#ff006e','#8338ec','#3a86ff'][d % 5]}
-                    opacity={mi === 0 && d === 8 ? 1 : mi === 0 ? 0.35 : 0.6}
+                    opacity={mi === 0 && d === 6 ? 1 : mi === 0 ? 0.3 : 0.55}
                   />
                 {/each}
-                <!-- mode-specific overlay -->
                 {#if mi === 0}
-                  <!-- highlight box -->
-                  <rect x={mode.x + 12 + (8 % 5)*22 - 8} y="60" width="22" height="22" fill="none" stroke="#ff6b6b" stroke-width="1.5" rx="2"/>
+                  <rect x={mode.x+14+(6%4)*26-8} y="62" width="28" height="28" fill="none" stroke="#ff6b6b" stroke-width="1.5" rx="2"/>
                 {:else if mi === 1}
-                  <!-- draw polygon -->
-                  <polygon points="{mode.x+20},{90} {mode.x+110},{75} {mode.x+120},{160} {mode.x+40},{170}"
+                  <polygon points="{mode.x+18},{90} {mode.x+112},{78} {mode.x+118},{175} {mode.x+28},{182}"
                     fill="rgba(249,115,22,0.12)" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4,3"/>
                 {:else}
-                  <!-- viewport scan lines -->
-                  {#each [0,1,2] as l}
-                    <line x1={mode.x+8} y1={80+l*28} x2={mode.x+122} y2={80+l*28}
-                      stroke="#27A0CC" stroke-width="0.8" stroke-opacity="0.35" stroke-dasharray="2,4"/>
+                  {#each [0,1,2,3] as l}
+                    <line x1={mode.x+8} y1={85+l*30} x2={mode.x+124} y2={85+l*30}
+                      stroke="#27A0CC" stroke-width="0.8" stroke-opacity="0.3" stroke-dasharray="2,4"/>
                   {/each}
                 {/if}
-                <!-- legend bars at bottom of panel -->
-                {#each [100, 40, 18, 8, 6] as pct, bi}
-                  <rect x={mode.x+10} y={198 + bi*9} width={pct * 1.1} height="5"
+                {#each [100, 38, 16, 8, 5] as pct, bi}
+                  <rect x={mode.x+10} y={225 + bi*11} width={pct * 1.0} height="6"
                     fill={['#ffbe0b','#fb5607','#ff006e','#8338ec','#3a86ff'][bi]} rx="1" opacity="0.75"/>
                 {/each}
               {/each}
-              <text x="250" y="278" class="illus-note" text-anchor="middle">legend updates in real time for all three modes</text>
-            </svg>
-
-          <!-- Chapter VI: Product scatter -->
-          {:else if step.id === 'product'}
-            <svg viewBox="0 0 500 340" class="illus" xmlns="http://www.w3.org/2000/svg">
-              <text x="250" y="22" class="illus-title" text-anchor="middle">England + Wales — Ethnicity 2021</text>
-              <!-- stylised dot density scatter -->
-              {#each Array(600) as _, d}
-                {@const seed1 = (d * 1973 + 17) % 997}
-                {@const seed2 = (d * 1301 + 83) % 887}
-                {@const cx = 50 + (seed1 / 997) * 400}
-                {@const cy = 38 + (seed2 / 887) * 270}
-                <!-- cluster dots near centre (London analogue) -->
-                {@const distFromCentre = Math.sqrt((cx-250)**2 + (cy-173)**2)}
-                {@const catProb = distFromCentre < 80 ? [0.28,0.18,0.09,0.35,0.10] : [0.09,0.05,0.03,0.80,0.03]}
-                {@const rand = (seed1 * seed2) % 100 / 100}
-                {@const cat = rand < catProb[0] ? 0 : rand < catProb[0]+catProb[1] ? 1 : rand < catProb[0]+catProb[1]+catProb[2] ? 2 : rand < catProb[0]+catProb[1]+catProb[2]+catProb[3] ? 3 : 4}
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r="1.8"
-                  fill={['#ffbe0b','#fb5607','#ff006e','#8338ec','#3a86ff'][cat]}
-                  opacity={distFromCentre < 80 ? 0.85 : 0.45}
-                />
-              {/each}
-              <!-- category legend -->
-              {#each ['Asian','Black','Mixed','White','Other'] as cat, ci}
-                <circle cx={75 + ci*80} cy="325" r="4" fill={['#ffbe0b','#fb5607','#ff006e','#8338ec','#3a86ff'][ci]}/>
-                <text x={82 + ci*80} y="329" class="illus-note">{cat}</text>
-              {/each}
+              <text x="250" y="348" class="illus-note" text-anchor="middle">legend updates in real time for all three modes</text>
             </svg>
           {/if}
+
         </div>
       {/if}
     {/each}
+
+    <!-- Chapter VI: iframe lives outside the transition system so pointer events are never blocked -->
+    <div
+      class="visual-slot map-slot"
+      style="opacity:{mapActive ? 1 : 0}; pointer-events:{mapActive ? 'auto' : 'none'};"
+    >
+      <iframe
+        src="/"
+        title="Census Dot Density Map"
+        class="map-embed"
+      />
+    </div>
+
   </div>
 
   <!-- ─── Hero ─── -->
@@ -320,24 +271,16 @@
           {#if step.rationale}
             <aside class="rationale">
               <span class="rationale-label">Rationale</span>
-              <p class="rationale-text">{step.rationale}</p>
+              <p class="rationale-text">{@html step.rationale}</p>
             </aside>
+          {/if}
+          {#if step.cta}
+            <a href={step.cta.href} class="step-cta">{step.cta.label}</a>
           {/if}
         </div>
       </div>
     </section>
   {/each}
-
-  <!-- ─── Outro ─── -->
-  <section class="outro">
-    <div class="caption-col">
-      <div class="caption-inner">
-        <h2>See it live</h2>
-        <p class="sub">The complete map — all 56 million people, all five categories.</p>
-        <a href="/" class="cta">Explore the map →</a>
-      </div>
-    </div>
-  </section>
 
   <!-- ─── Nav dots ─── -->
   <nav class="nav-dots" aria-label="Chapter navigation">
@@ -389,18 +332,21 @@
   /* ── Root ── */
   .story-root { position: relative; }
 
-  /* ── Fixed right visual pane (60%) ── */
+  /* ── Fixed left visual pane — default 1/3 ── */
   .visual-pane {
     position: fixed;
-    top: 0; right: 0;
-    width: 60%; height: 100vh;
+    top: 0; left: 0;
+    width: 50%; height: 100vh;
     z-index: 1;
     pointer-events: none;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(0,0,0,0.15);
+    transition: width 0.6s ease;
   }
+  /* Chapter I: 2/3 image */
+  .wide-visual .visual-pane { width: 66.67%; }
   .visual-slot {
     position: absolute;
     inset: 0;
@@ -417,6 +363,36 @@
     height: auto;
     font-family: 'Montserrat', sans-serif;
     overflow: visible;
+  }
+
+  /* ── Full-pane chapter image ── */
+  .chapter-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  /* ── Live map iframe ── */
+  .map-slot {
+    transition: opacity 0.4s ease;
+  }
+
+  .map-embed {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    pointer-events: auto;
+  }
+
+  /* Enable interaction when iframe is showing */
+  .visual-pane.map-active,
+  .visual-slot.interactive {
+    pointer-events: auto;
   }
   :global(.illus-title) {
     font-size: 13px; font-weight: 700; fill: rgba(255,255,255,0.7); letter-spacing: 0.04em;
@@ -458,14 +434,19 @@
   }
   .step.active { opacity: 1; }
 
-  /* ── Caption column (left 40%) ── */
+  /* ── Caption column — default 2/3 text ── */
   .caption-col {
-    width: 40%;
-    padding: 3rem 2rem 3rem 3.5rem;
+    width: 50%;
+    margin-left: 50%;
+    padding: 3rem 3.5rem 3rem 2.5rem;
     position: relative;
     z-index: 10;
+    transition: width 0.6s ease, margin-left 0.6s ease;
   }
-  .caption-inner { max-width: 360px; }
+  /* Chapter I: 1/3 text */
+  .wide-visual .caption-col { width: 33.33%; margin-left: 66.67%; }
+  .caption-inner { max-width: 560px; }
+  .wide-visual .caption-inner { max-width: 280px; }
 
   /* ── Text styles ── */
   .back {
@@ -584,6 +565,21 @@
     transition: opacity 0.2s, transform 0.2s;
   }
   .cta:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  .step-cta {
+    display: inline-block;
+    margin-top: 1.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(39,160,204,0.35);
+    padding-bottom: 2px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .step-cta:hover { border-color: var(--accent); }
 
   /* ── Nav dots ── */
   .nav-dots {

@@ -55,7 +55,7 @@
 
     // Get initial position from hash or default to London
     const hashPos = parseHash();
-    const initialZoom = hashPos?.zoom ?? 10.3;
+    const initialZoom = hashPos?.zoom ?? 12;
     const initialCenter = hashPos ? [hashPos.lng, hashPos.lat] : [-0.1276, 51.5074];
 
     map = window.map = new maplibregl.Map({

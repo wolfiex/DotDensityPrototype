@@ -43,7 +43,6 @@
 
   // Panel visibility
   let showLegend = true;
-  let settingsCollapsed = false;
 
   // Initialize dataset
   function initDataset(tileId) {
@@ -124,7 +123,7 @@
     if (!map) return 0.5;
     const canvas = map.getCanvas();
     const baseDim = Math.min(canvas.clientWidth, canvas.clientHeight) || 1000;
-    return Math.max(0.5, (dscale * baseDim) / 200);
+    return (dscale * baseDim) / 200;
   }
 
   function applyDotSize() {
@@ -549,13 +548,7 @@
 </div>
 
 <!-- Top Right: Settings -->
-<div class="settings" class:collapsed={settingsCollapsed}>
-  <button class="settings-header" on:click={() => settingsCollapsed = !settingsCollapsed}>
-    <span class="settings-title">Settings</span>
-    <span class="chevron" class:open={!settingsCollapsed}>›</span>
-  </button>
-
-  {#if !settingsCollapsed}
+<div class="settings">
   <div class="setting-row">
     <span class="setting-label">Point size</span>
     <input
@@ -599,7 +592,6 @@
       </button>
     {/if}
   </div>
-  {/if}
 </div>
 
 <!-- Bottom Right: Legend -->
@@ -772,9 +764,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 25vw;
-    min-width: 220px;
-    max-width: 480px;
+    width: 220px;
     box-sizing: border-box;
   }
 
@@ -910,9 +900,8 @@
     padding: 12px 14px;
     border-radius: 10px;
     color: white;
-    width: 25vw;
-    min-width: 220px;
-    max-width: 480px;
+    min-width: 520px;
+    max-width: 600px;
   }
 
   .legend-header {
@@ -1052,38 +1041,4 @@
     padding-top: 4px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
-
-  /* Collapse */
-  .settings.collapsed { gap: 0; }
-
-  .settings-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: none;
-    border: none;
-    color: white;
-    padding: 0;
-    cursor: pointer;
-    width: 100%;
-  }
-
-  .settings-title {
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  .chevron {
-    font-size: 1rem;
-    color: #555;
-    transition: transform 0.2s;
-    transform: rotate(90deg);
-    line-height: 1;
-    display: block;
-  }
-
-  .chevron.open { transform: rotate(-90deg); }
 </style>
