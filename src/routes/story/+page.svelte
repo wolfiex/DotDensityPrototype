@@ -420,6 +420,7 @@
     align-items: center;
     position: relative;
     z-index: 2;
+    pointer-events: none;
   }
 
   /* ── Steps ── */
@@ -431,6 +432,7 @@
     z-index: 2;
     opacity: 0.22;
     transition: opacity 0.5s ease;
+    pointer-events: none;
   }
   .step.active { opacity: 1; }
 
@@ -442,6 +444,7 @@
     position: relative;
     z-index: 10;
     transition: width 0.6s ease, margin-left 0.6s ease;
+    pointer-events: auto;
   }
   /* Chapter I: 1/3 text */
   .wide-visual .caption-col { width: 33.33%; margin-left: 66.67%; }
