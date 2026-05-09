@@ -52,6 +52,9 @@
   $: if (csum) updateBarColors();
   $: if (colour) updateBarColors();
   $: if (keys) updateBarColors();
+
+  $: total = (csum || []).reduce((a, b) => a + (b || 0), 0);
+  $: percentages = (csum || []).map((v) => (total > 0 ? Math.round((v / total) * 100) : 0));
 </script>
 
 <div class="categories">
@@ -62,7 +65,10 @@
       class:hidden={colour[i] === 'transparent'}
       on:click={() => toggleCategory(i)}
     >
-      <span class="category-label">{category}</span>
+      <div class="row-top">
+        <span class="category-label">{category}</span>
+        <span class="category-pct">{percentages[i] ?? 0}%</span>
+      </div>
       <div class="bars-container">
         <div class="main-bar">
           <ProgressBar
@@ -118,6 +124,25 @@
     color: #ccc;
     margin-bottom: 4px;
     line-height: 1.3;
+  }
+
+  .row-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .row-top .category-label {
+    margin-bottom: 0;
+  }
+
+  .category-pct {
+    font-size: 0.72rem;
+    color: #888;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
   }
 
   .bars-container {

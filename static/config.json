@@ -1,41 +1,110 @@
 {
-  "tileHost": "https://wolfiex.github.io/DotDensityTiles/static",
-  "ratioHost": "https://onsvisual.github.io",
   "datasets": {
     "TS021_ethnic_group_tb_6a_2021": {
       "name": "Ethnicity",
+      "tileDir": "TS021_ethnic_group_tb_6a_2021",
       "dotLayer": "TS021_ethnic_group_tb_6a_2021",
       "ratioLayer": "ratio",
       "keys": [
-        "Asian, Asian British or Asian Welsh",
-        "Black, Black British, Black Welsh, Caribbean or African",
-        "Mixed or Multiple ethnic groups",
+        "Asian",
+        "Black",
+        "Mixed",
         "White",
-        "Other ethnic group"
+        "Other"
       ],
-      "ratios": [11.04, 4.797, 3.48, 100.0, 2.51]
+      "ratios": [11.04, 4.80, 3.48, 100.0, 2.51]
     },
-    "TS002_legal_partnership_status_3a_2021": {
-      "name": "Legal Partnership",
-      "dotLayer": "TS002_legal_partnership_status_3a_2021",
+    "TS030_religion_oa_2021": {
+      "name": "Religion",
+      "tileDir": "TS030_religion_oa_2021",
+      "dotLayer": "TS030_religion_oa_2021",
       "ratioLayer": "ratio",
       "keys": [
-        "Married or in a registered civil partnership",
-        "Other marital or civil partnership status"
+        "Buddhist",
+        "Christian",
+        "Hindu",
+        "Jewish",
+        "Muslim",
+        "No religion",
+        "Not answered",
+        "Other religion",
+        "Sikh"
       ],
-      "ratios": [81.2, 100.0]
+      "ratios": [0.5, 46.2, 1.7, 0.5, 6.5, 100.0, 12.0, 0.6, 0.9]
+    },
+    "TS038-Disability-2021-oa-ONS": {
+      "name": "Disability",
+      "tileDir": "TS038-Disability-2021-oa-ONS",
+      "dotLayer": "TS038-Disability-2021-oa-ONS",
+      "ratioLayer": "ratio",
+      "keys": [
+        "Limited a little",
+        "Limited a lot",
+        "Has condition, not limited",
+        "No condition"
+      ],
+      "ratios": [10.8, 5.8, 9.4, 100.0]
+    },
+    "TS059-Hours-Worked-2021-oa-ONS": {
+      "name": "Hours Worked",
+      "tileDir": "TS059-Hours-Worked-2021-oa-ONS",
+      "dotLayer": "TS059-Hours-Worked-2021-oa-ONS",
+      "ratioLayer": "ratio",
+      "keys": [
+        "Full-time: 31-48 hrs",
+        "Full-time: 49+ hrs",
+        "Part-time: ≤15 hrs",
+        "Part-time: 16-30 hrs"
+      ],
+      "ratios": [100.0, 21.5, 15.2, 25.8]
     },
     "TS017_hh_size_5a_2021": {
       "name": "Household Size",
+      "tileDir": "TS017_hh_size_5a_2021",
       "dotLayer": "TS017_hh_size_5a_2021",
       "ratioLayer": "ratio",
       "keys": [
-        "1 person in household",
-        "2 people in household",
-        "3 people in household",
-        "4 or more people in household"
+        "1 person",
+        "2 people",
+        "3 people",
+        "4+ people"
       ],
       "ratios": [63.5, 100.0, 38.2, 45.8]
+    },
+    "TS002_legal_partnership_status_3a_2021": {
+      "name": "Partnership Status",
+      "tileDir": "TS002_legal_partnership_status_3a_2021",
+      "dotLayer": "TS002_legal_partnership_status_3a_2021",
+      "ratioLayer": "ratio",
+      "keys": [
+        "Married / Civil Partnership",
+        "Other status"
+      ],
+      "ratios": [81.2, 100.0]
+    },
+    "TS003_hh_family_composition_4a_2021": {
+      "name": "Family Composition",
+      "tileDir": "TS003_hh_family_composition_4a_2021",
+      "dotLayer": "TS003_hh_family_composition_4a_2021",
+      "ratioLayer": "ratio",
+      "keys": [
+        "Multiple family",
+        "One person",
+        "Single family"
+      ],
+      "ratios": [4.2, 30.1, 100.0]
+    },
+    "TS005_passports_all_4a_2021": {
+      "name": "Passports",
+      "tileDir": "TS005_passports_all_4a_2021",
+      "dotLayer": "TS005_passports_all_4a_2021",
+      "ratioLayer": "ratio",
+      "keys": [
+        "UK passport",
+        "Non-UK passport",
+        "No passport"
+      ],
+      "ratios": [100.0, 17.5, 10.2]
     }
   }
 }

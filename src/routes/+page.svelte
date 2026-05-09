@@ -3,7 +3,7 @@
   import MapComponent from './MapComponent.svelte';
   import Categories from './Categories.svelte';
   import AtomicLoader from '$lib/components/AtomicLoader.svelte';
-  import { Dropdown, Search } from 'carbon-components-svelte';
+  import { Search } from 'carbon-components-svelte';
   import 'carbon-components-svelte/css/g100.css';
 
   // Color palette
@@ -22,15 +22,27 @@
   let keytitle = 'England + Wales';
   let keycentre = false;
   let tile = '';
-  let dscale = 0.1;
+  let dscale = 0.16;
   let isUpdating = false;
+  let selectedOA = null;
+  let selectedTotal = null;
+
+  // Freedraw state
+  let isDrawing = false;
+  let drawPoints = [];
+  let selectedOAs = [];
+
+  // Handle keyboard events
+  function handleKeydown(e) {
+    if (e.key === 'Enter' && isDrawing) {
+      finishDrawing();
+    } else if (e.key === 'Escape' && isDrawing) {
+      cancelDrawing();
+    }
+  }
 
   // Panel visibility
-  let showMenu = true;
   let showLegend = true;
-
-  // Derived from config
-  let datasets = [];
 
   // Initialize dataset
   function initDataset(tileId) {
@@ -40,70 +52,6 @@
     bcsum = [...dataset.ratios];
     csum = [...dataset.ratios];
     colour = colourbase.slice(0, keys.length);
-  }
-
-  // Change tile dataset
-  async function changetile(tileId) {
-    if (!map || isUpdating || !config || !tileId) return;
-    
-    const dotSource = map.getSource('dot-src');
-    const ratioSource = map.getSource('ratio-src');
-    if (!dotSource) return;
-    
-    const dataset = config.datasets[tileId];
-    if (!dataset) return;
-
-    isUpdating = true;
-    
-    try {
-      const { tileHost } = config;
-      
-      dotSource.setTiles([`${tileHost}/${tileId}/{z}/{x}/{y}.pbf`]);
-      ratioSource?.setTiles([`${tileHost}/${tileId}/ratios/{z}/{x}/{y}.pbf`]);
-
-      map.removeLayer('dot-data');
-      map.removeLayer('poly-layer');
-      
-      map.addLayer({
-        id: 'dot-data',
-        type: 'circle',
-        source: 'dot-src',
-        maxzoom: 22,
-        minzoom: 4,
-        'source-layer': dataset.dotLayer,
-        paint: {
-          'circle-radius': dscale * Math.floor(map.getZoom()) ** 0.7,
-          'circle-color': 'white',
-          'circle-opacity': 0.83
-        },
-        filter: ['==', '$type', 'Point']
-      });
-
-      map.addLayer({
-        id: 'poly-layer',
-        type: 'fill',
-        source: 'ratio-src',
-        'source-layer': dataset.ratioLayer,
-        maxzoom: 22,
-        minzoom: 0,
-        paint: {
-          'fill-color': 'rgba(0, 0, 0, 0)',
-          'fill-outline-color': 'rgba(200, 200, 240, 0.1)'
-        }
-      });
-
-      initDataset(tileId);
-      keytitle = 'England + Wales';
-      keycentre = false;
-
-      setTimeout(() => {
-        updatePaint();
-        isUpdating = false;
-      }, 50);
-    } catch (err) {
-      console.error('Error changing tile:', err);
-      isUpdating = false;
-    }
   }
 
   // Calculate on-screen ratios
@@ -158,7 +106,7 @@
       if (data.result) {
         map.flyTo({
           center: [data.result.longitude, data.result.latitude],
-          zoom: 14
+          zoom: 13
         });
       } else {
         alert('Postcode not found');
@@ -168,49 +116,370 @@
     }
   }
 
-  // Handle point size change
-  function handlePointSizeChange() {
+  // Compute dot radius as a ratio of the canvas size.
+  // dscale (slider) is treated as a percentage-like factor:
+  // radius = dscale * min(canvas.width, canvas.height) / 200
+  function computeDotRadius() {
+    if (!map) return 0.5;
+    const canvas = map.getCanvas();
+    const baseDim = Math.min(canvas.clientWidth, canvas.clientHeight) || 1000;
+    return (dscale * baseDim) / 200;
+  }
+
+  function applyDotSize() {
     if (map?.getLayer('dot-data')) {
-      map.setPaintProperty('dot-data', 'circle-radius', dscale * Math.floor(map.getZoom()) ** 0.7);
+      map.setPaintProperty('dot-data', 'circle-radius', computeDotRadius());
     }
   }
 
-  // Handle legend title click
+  function handlePointSizeChange() {
+    applyDotSize();
+  }
+
+  // Clear area selection and reset to national average
+  function clearSelection() {
+    if (!config?.datasets?.[tile]) return;
+    const dataset = config.datasets[tile];
+    csum = [...dataset.ratios];
+    keytitle = 'England + Wales';
+    keycentre = false;
+    selectedOA = null;
+    selectedTotal = null;
+    selectedOAs = [];
+    
+    // Reset polygon styling
+    if (map?.getLayer('poly-layer')) {
+      map.setPaintProperty('poly-layer', 'fill-outline-color', 'rgba(255, 255, 255, 0.08)');
+      map.setPaintProperty('poly-layer', 'fill-color', 'rgba(0, 0, 0, 0)');
+    }
+    
+    // Remove draw layer if exists
+    if (map?.getSource('draw-polygon')) {
+      if (map.getLayer('draw-polygon-fill')) map.removeLayer('draw-polygon-fill');
+      if (map.getLayer('draw-polygon-line')) map.removeLayer('draw-polygon-line');
+      map.removeSource('draw-polygon');
+    }
+  }
+
+  // Handle legend title click - fly to selected area
   function handleLegendClick() {
     if (keycentre) {
-      map.flyTo({ center: keycentre, zoom: 14 });
+      map.flyTo({ center: keycentre, zoom: 13 });
     }
+  }
+
+  // Select an output area and display its stats
+  function selectArea(props, lngLat) {
+    if (isDrawing) return; // Don't select while drawing
+
+    keycentre = lngLat.toArray();
+    selectedOA = props.OA21CD;
+    selectedOAs = [props.OA21CD];
+
+    try {
+      // Parse ratios
+      let ratios = props.ratios;
+      if (typeof ratios === 'string') {
+        ratios = JSON.parse(ratios);
+      }
+      
+      if (!Array.isArray(ratios) || ratios.length === 0) {
+        console.error('Invalid ratios:', props.ratios);
+        return;
+      }
+
+      // Calculate totals and percentages
+      const total = ratios.reduce((a, b) => a + b, 0);
+      const mx = Math.max(...ratios);
+      
+      selectedTotal = total;
+      csum = ratios.map((d) => (100 * d) / mx);
+      keytitle = props.OA21CD;
+
+      // Highlight selected area
+      map.setPaintProperty('poly-layer', 'fill-outline-color', [
+        'match', ['get', 'OA21CD'],
+        props.OA21CD, '#ff6b6b',
+        'rgba(255, 255, 255, 0.08)'
+      ]);
+      map.setPaintProperty('poly-layer', 'fill-color', [
+        'match', ['get', 'OA21CD'],
+        props.OA21CD, 'rgba(255, 107, 107, 0.2)',
+        'rgba(0, 0, 0, 0)'
+      ]);
+    } catch (err) {
+      console.error('Error parsing ratios:', err);
+    }
+  }
+
+  // ==================== FREEDRAW FUNCTIONS ====================
+
+  // Start drawing mode
+  function startDrawing() {
+    isDrawing = true;
+    drawPoints = [];
+    clearSelection();
+    map.getCanvas().style.cursor = 'crosshair';
+    
+    // Disable map interactions
+    map.dragPan.disable();
+    map.scrollZoom.disable();
+    map.doubleClickZoom.disable();
+  }
+
+  // Cancel drawing
+  function cancelDrawing() {
+    isDrawing = false;
+    drawPoints = [];
+    map.getCanvas().style.cursor = '';
+    
+    // Re-enable map interactions
+    map.dragPan.enable();
+    map.scrollZoom.enable();
+    
+    // Remove draw layer
+    if (map.getSource('draw-polygon')) {
+      if (map.getLayer('draw-polygon-fill')) map.removeLayer('draw-polygon-fill');
+      if (map.getLayer('draw-polygon-line')) map.removeLayer('draw-polygon-line');
+      map.removeSource('draw-polygon');
+    }
+  }
+
+  // Finish drawing and select OAs
+  function finishDrawing() {
+    if (drawPoints.length < 3) {
+      cancelDrawing();
+      return;
+    }
+    
+    isDrawing = false;
+    map.getCanvas().style.cursor = '';
+    
+    // Re-enable map interactions
+    map.dragPan.enable();
+    map.scrollZoom.enable();
+    
+    // Create polygon from points
+    const polygon = [...drawPoints, drawPoints[0]]; // Close the polygon
+    
+    // Find all OAs that intersect with the polygon
+    selectOAsInPolygon(polygon);
+  }
+
+  // Check if point is inside polygon (ray casting)
+  function pointInPolygon(point, polygon) {
+    const x = point[0], y = point[1];
+    let inside = false;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1];
+      const xj = polygon[j][0], yj = polygon[j][1];
+      
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    
+    return inside;
+  }
+
+  // Select all OAs within the drawn polygon
+  function selectOAsInPolygon(polygon) {
+    // Query all visible poly-layer features
+    const features = map.queryRenderedFeatures({ layers: ['poly-layer'] });
+    
+    // Find unique OAs whose centroids are inside the polygon
+    const oaSet = new Set();
+    const oaRatios = {};
+    
+    features.forEach(f => {
+      const oa = f.properties.OA21CD;
+      if (oaSet.has(oa)) return;
+      
+      // Get centroid of the feature
+      let centroid;
+      if (f.geometry.type === 'Polygon') {
+        // Approximate centroid from first ring
+        const coords = f.geometry.coordinates[0];
+        const sumX = coords.reduce((a, c) => a + c[0], 0);
+        const sumY = coords.reduce((a, c) => a + c[1], 0);
+        centroid = [sumX / coords.length, sumY / coords.length];
+      } else if (f.geometry.type === 'MultiPolygon') {
+        const coords = f.geometry.coordinates[0][0];
+        const sumX = coords.reduce((a, c) => a + c[0], 0);
+        const sumY = coords.reduce((a, c) => a + c[1], 0);
+        centroid = [sumX / coords.length, sumY / coords.length];
+      }
+      
+      if (centroid && pointInPolygon(centroid, polygon)) {
+        oaSet.add(oa);
+        try {
+          let ratios = f.properties.ratios;
+          if (typeof ratios === 'string') ratios = JSON.parse(ratios);
+          if (Array.isArray(ratios)) {
+            oaRatios[oa] = ratios;
+          }
+        } catch (e) {}
+      }
+    });
+    
+    selectedOAs = Array.from(oaSet);
+
+    if (selectedOAs.length === 0) {
+      cancelDrawing();
+      return;
+    }
+    
+    // Calculate average ratios
+    const numCategories = keys.length;
+    const sumRatios = new Array(numCategories).fill(0);
+    let totalPeople = 0;
+    
+    Object.values(oaRatios).forEach(ratios => {
+      ratios.forEach((v, i) => {
+        if (i < numCategories) sumRatios[i] += v;
+      });
+      totalPeople += ratios.reduce((a, b) => a + b, 0);
+    });
+    
+    // Normalize for display
+    const mx = Math.max(...sumRatios);
+    if (mx > 0) {
+      csum = sumRatios.map(d => (100 * d) / mx);
+    }
+    
+    selectedTotal = totalPeople;
+    selectedOA = 'custom';
+    keytitle = 'Custom Area';
+    keycentre = polygon[0]; // Use first point as center
+    
+    // Remove draw polygon layer
+    if (map.getSource('draw-polygon')) {
+      if (map.getLayer('draw-polygon-fill')) map.removeLayer('draw-polygon-fill');
+      if (map.getLayer('draw-polygon-line')) map.removeLayer('draw-polygon-line');
+      map.removeSource('draw-polygon');
+    }
+    
+    // Highlight selected OAs with orange style (matching draw polygon)
+    if (selectedOAs.length > 0) {
+      map.setPaintProperty('poly-layer', 'fill-outline-color', [
+        'match', ['get', 'OA21CD'],
+        ...selectedOAs.flatMap(oa => [oa, '#f97316']),
+        'rgba(255, 255, 255, 0.08)'
+      ]);
+      map.setPaintProperty('poly-layer', 'fill-color', [
+        'match', ['get', 'OA21CD'],
+        ...selectedOAs.flatMap(oa => [oa, 'rgba(249, 115, 22, 0.2)']),
+        'rgba(0, 0, 0, 0)'
+      ]);
+    }
+  }
+
+  // Update the draw polygon on the map
+  function updateDrawPolygon() {
+    if (drawPoints.length < 2) return;
+    
+    const coordinates = drawPoints.length >= 3 
+      ? [[...drawPoints, drawPoints[0]]]
+      : [drawPoints];
+    
+    const geojson = {
+      type: 'Feature',
+      geometry: {
+        type: drawPoints.length >= 3 ? 'Polygon' : 'LineString',
+        coordinates: drawPoints.length >= 3 ? coordinates : drawPoints
+      }
+    };
+    
+    if (map.getSource('draw-polygon')) {
+      map.getSource('draw-polygon').setData(geojson);
+    } else {
+      map.addSource('draw-polygon', {
+        type: 'geojson',
+        data: geojson
+      });
+      
+      map.addLayer({
+        id: 'draw-polygon-fill',
+        type: 'fill',
+        source: 'draw-polygon',
+        paint: {
+          'fill-color': 'rgba(249, 115, 22, 0.2)',
+          'fill-outline-color': '#f97316'
+        }
+      });
+      
+      map.addLayer({
+        id: 'draw-polygon-line',
+        type: 'line',
+        source: 'draw-polygon',
+        paint: {
+          'line-color': '#f97316',
+          'line-width': 2,
+          'line-dasharray': [2, 2]
+        }
+      });
+    }
+  }
+
+  // Handle mouse events for drawing
+  function setupDrawHandlers() {
+    map.on('mousedown', (e) => {
+      if (!isDrawing) return;
+      drawPoints.push([e.lngLat.lng, e.lngLat.lat]);
+      updateDrawPolygon();
+    });
+    
+    map.on('mousemove', (e) => {
+      if (!isDrawing || drawPoints.length === 0) return;
+      // Show preview line to cursor
+      const previewPoints = [...drawPoints, [e.lngLat.lng, e.lngLat.lat]];
+      
+      const geojson = {
+        type: 'Feature',
+        geometry: {
+          type: previewPoints.length >= 3 ? 'Polygon' : 'LineString',
+          coordinates: previewPoints.length >= 3 
+            ? [[...previewPoints, previewPoints[0]]]
+            : previewPoints
+        }
+      };
+      
+      if (map.getSource('draw-polygon')) {
+        map.getSource('draw-polygon').setData(geojson);
+      }
+    });
   }
 
   onMount(async () => {
     const res = await fetch('/config.json');
     config = await res.json();
 
-    datasets = Object.entries(config.datasets).map(([id, data]) => ({
-      id,
-      text: data.name
-    }));
-    
-    tile = Object.keys(config.datasets)[0];
+    // Single dataset: ethnicity
+    tile = 'TS021_ethnic_group_tb_6a_2021';
 
     colour = [...colourbase];
     legend = document.querySelector('.legend');
 
     initDataset(tile);
 
+    // Re-apply dot size on window resize so it stays a ratio of screen
+    const onResize = () => applyDotSize();
+    window.addEventListener('resize', onResize);
+
     const checkMap = setInterval(() => {
       if (map?.loaded()) {
         clearInterval(checkMap);
         
         updatePaint();
+        applyDotSize();
+        setupDrawHandlers();
 
         const peopleEl = document.getElementById('people');
         map.on('zoomend', () => {
           const z = Math.floor(map.getZoom());
           if (peopleEl) peopleEl.innerText = Math.ceil(2 ** (14 - z));
-          if (map.getLayer('dot-data')) {
-            map.setPaintProperty('dot-data', 'circle-radius', dscale * z ** 0.7);
-          }
+          applyDotSize();
           if (usePageAverage) legend?.classList.add('loading');
         });
 
@@ -218,65 +487,40 @@
           if (usePageAverage) legend?.classList.add('loading');
         });
 
-        // Double-click to select output area
-        map.on('dblclick', 'poly-layer', (e) => {
-          console.log('Double-click detected!', e.features);
-          if (!e.features?.length) {
-            console.log('No features at click location');
-            return;
-          }
+        // Click handler - query features at click point
+        map.on('click', (e) => {
+          if (isDrawing) return;
           
-          const props = e.features[0].properties;
-          console.log('Feature props:', props);
-          keycentre = e.lngLat.toArray();
-          
-          if (map.getZoom() < 12) map.setZoom(12);
+          const features = map.queryRenderedFeatures(e.point, { layers: ['poly-layer'] });
 
-          try {
-            const ratios = JSON.parse(props.ratios);
-            const mx = Math.max(...ratios);
-            csum = ratios.map((d) => (100 * d) / mx);
-            const total = ratios.reduce((a, b) => a + b, 0);
-            keytitle = `Output Area: ${props.OA21CD} (${total.toLocaleString()} people)`;
-
-            map.setPaintProperty('poly-layer', 'fill-outline-color', [
-              'match', ['get', 'OA21CD'],
-              props.OA21CD, 'red',
-              'rgba(200, 200, 240, 0.1)'
-            ]);
-          } catch (err) {
-            console.error('Error parsing ratios:', err);
+          if (features.length > 0) {
+            selectArea(features[0].properties, e.lngLat);
           }
         });
 
-        // Also listen for general double-clicks to debug
-        map.on('dblclick', (e) => {
-          console.log('General dblclick at:', e.lngLat);
+        // Hover effects
+        map.on('mousemove', (e) => {
+          if (isDrawing) return;
           const features = map.queryRenderedFeatures(e.point, { layers: ['poly-layer'] });
-          console.log('Features at point:', features.length);
+          map.getCanvas().style.cursor = features.length > 0 ? 'pointer' : '';
         });
 
         map.on('idle', calculateScreenRatios);
       }
     }, 100);
 
-    return () => clearInterval(checkMap);
+    return () => {
+      clearInterval(checkMap);
+      window.removeEventListener('resize', onResize);
+    };
   });
-
-  function handleTileChange(e) {
-    const newTile = e.detail.selectedId;
-    if (newTile && newTile !== tile) {
-      tile = newTile;
-      changetile(tile);
-    }
-  }
 
   $: if (map?.getLayer('dot-data') && colour) updatePaint();
   
   $: if (usePageAverage && legend) {
     legend.classList.add('loading');
     calculateScreenRatios();
-  } else if (!usePageAverage && legend && config?.datasets?.[tile]) {
+  } else if (!usePageAverage && legend && config?.datasets?.[tile] && !selectedOA) {
     const dataset = config.datasets[tile];
     csum = [...dataset.ratios];
     keytitle = 'England + Wales';
@@ -284,52 +528,34 @@
   }
 </script>
 
+<svelte:window on:keydown={handleKeydown} />
+
 <AtomicLoader backgroundColor="#1a1a2e" />
 
 <MapComponent bind:map {config} />
 
-<!-- Top Left: Controls -->
-<div class="menu" class:hidden={!showMenu}>
-  <button class="close-btn" on:click={() => showMenu = false}>×</button>
-  
-  <a href="https://datalegrey.sa" target="_blank" class="logo-link">
-    <svg class="logo" viewBox="0 0 100 100" width="32" height="32">
-      <defs>
-        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#f97316" />
-          <stop offset="100%" style="stop-color:#ea580c" />
-        </linearGradient>
-      </defs>
-      <rect width="100" height="100" rx="12" fill="#0c0c0c"/>
-      <text x="50" y="62" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="url(#logoGrad)" text-anchor="middle">D</text>
-    </svg>
-    <span>Census Dots</span>
+<!-- Top Left: Title with source -->
+<div class="dataset-title">
+  <h1 class="dataset-name">Ethnicity TS021 6a</h1>
+  <a
+    class="dataset-source"
+    href="https://danellisresearch.github.io/TS021_ethnic_group_tb_6a_2021/"
+    target="_blank"
+    rel="noopener"
+  >
+    danellisresearch.github.io/TS021_ethnic_group_tb_6a_2021
   </a>
-  
-  <div class="control-group">
-    <Dropdown items={datasets} selectedId={tile} on:select={handleTileChange} size="sm" />
-  </div>
-
-  <div class="control-group">
-    <Search size="sm" on:change={handlePostcodeSearch} placeholder="Search postcode..." />
-  </div>
-
-  <p class="info-text">
-    <strong>1 dot</strong> = <span id="people">16</span> people
-  </p>
-
-  <p class="hint-text">💡 Double-click an area to see its breakdown</p>
 </div>
 
 <!-- Top Right: Settings -->
 <div class="settings">
   <div class="setting-row">
     <span class="setting-label">Point size</span>
-    <input 
-      type="range" 
-      min="0.04" 
-      max="0.2" 
-      step="0.01" 
+    <input
+      type="range"
+      min="0.04"
+      max="0.4"
+      step="0.01"
       bind:value={dscale}
       on:input={handlePointSizeChange}
     />
@@ -341,20 +567,59 @@
       <span class="toggle-slider"></span>
     </label>
   </div>
+
+  <div class="setting-block">
+    <Search size="sm" on:change={handlePostcodeSearch} placeholder="Search postcode..." />
+  </div>
+
+  <p class="info-text">
+    <strong>1 dot</strong> = <span id="people">16</span> people
+  </p>
+
+  <!-- Freedraw -->
+  <p class="draw-hint">Click an area to see its stats, or use the button below to draw an area.</p>
+  <div class="draw-buttons">
+    {#if !isDrawing}
+      <button class="draw-btn" on:click={startDrawing}>
+        Custom Selection
+      </button>
+    {:else}
+      <button class="draw-btn finish" on:click={finishDrawing}>
+        Finish
+      </button>
+      <button class="draw-btn cancel" on:click={cancelDrawing}>
+        Cancel
+      </button>
+    {/if}
+  </div>
 </div>
 
 <!-- Bottom Right: Legend -->
 <div class="legend" class:hidden={!showLegend}>
   <button class="close-btn" on:click={() => showLegend = false}>×</button>
 
-  <button
-    type="button"
-    class="legend-title-btn"
-    on:click={handleLegendClick}
-    title={keycentre ? 'Click to fly to this area' : ''}
-  >
-    {keytitle}
-  </button>
+  <div class="legend-header">
+    <button
+      type="button"
+      class="legend-title-btn"
+      on:click={handleLegendClick}
+      title={keycentre ? 'Click to fly to this area' : ''}
+    >
+      {keytitle}
+    </button>
+    {#if selectedOA}
+      <button class="clear-btn" on:click={clearSelection} title="Clear selection">×</button>
+    {/if}
+  </div>
+  
+  {#if selectedTotal}
+    <p class="area-total">
+      {selectedTotal.toLocaleString()} people
+      {#if selectedOAs.length > 1}
+        <span class="oa-count">({selectedOAs.length} areas)</span>
+      {/if}
+    </p>
+  {/if}
 
   <Categories {keys} bind:colour {colourbase} {csum} {bcsum} />
   
@@ -362,12 +627,15 @@
 </div>
 
 <!-- Show buttons when panels are hidden -->
-{#if !showMenu}
-  <button class="show-btn top-left" on:click={() => showMenu = true}>☰</button>
-{/if}
 {#if !showLegend}
   <button class="show-btn bottom-right" on:click={() => showLegend = true}>◧</button>
 {/if}
+
+<!-- Bottom Left: info tooltip -->
+<div class="info-tip" role="img" aria-label="Click an area to see its breakdown">
+  <span class="info-icon">i</span>
+  <span class="info-tooltip">Click an area to see its breakdown</span>
+</div>
 
 <svelte:head>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -428,66 +696,58 @@
     background: rgba(50, 50, 50, 0.95);
   }
 
-  .show-btn.top-left {
-    top: 10px;
-    left: 10px;
-  }
-
   .show-btn.bottom-right {
     bottom: 10px;
     right: 10px;
   }
 
-  /* Top Left Menu */
-  .menu {
+  /* Top Left: floating dataset title panel */
+  .dataset-title {
     position: absolute;
     top: 10px;
     left: 10px;
     z-index: 1000;
     background: rgba(30, 30, 30, 0.92);
     backdrop-filter: blur(10px);
-    padding: 14px 16px;
+    padding: 10px 14px;
     border-radius: 10px;
     color: white;
-    min-width: 200px;
+    max-width: 320px;
   }
 
-  .logo-link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: white;
-    margin-bottom: 14px;
-  }
-
-  .logo-link:hover {
-    opacity: 0.85;
-  }
-
-  .logo-link span {
+  .dataset-name {
+    margin: 0;
     font-size: 1rem;
     font-weight: 500;
+    letter-spacing: 0.02em;
+    color: white;
   }
 
-  .logo {
-    border-radius: 6px;
+  .dataset-source {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.65rem;
+    color: #888;
+    text-decoration: none;
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .control-group {
-    margin-bottom: 10px;
+  .dataset-source:hover {
+    color: #ccc;
+    text-decoration: underline;
   }
 
   .info-text {
-    font-size: 0.8rem;
-    color: #999;
-    margin: 6px 0 0 0;
+    font-size: 0.75rem;
+    color: #aaa;
+    margin: 0;
   }
 
-  .hint-text {
-    font-size: 0.7rem;
-    color: #666;
-    margin: 4px 0 0 0;
+  .setting-block {
+    margin-top: 2px;
   }
 
   /* Top Right Settings */
@@ -504,12 +764,14 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 220px;
+    box-sizing: border-box;
   }
 
   .setting-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
   }
 
@@ -519,7 +781,7 @@
   }
 
   .settings input[type="range"] {
-    width: 80px;
+    width: 100%;
     height: 4px;
     -webkit-appearance: none;
     appearance: none;
@@ -543,6 +805,7 @@
     display: inline-block;
     width: 36px;
     height: 20px;
+    justify-self: end;
   }
 
   .toggle input {
@@ -583,6 +846,49 @@
     transform: translateX(16px);
   }
 
+  /* Draw buttons */
+  .draw-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .draw-btn {
+    flex: 1;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    background: rgba(249, 115, 22, 0.2);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.4);
+    transition: all 0.2s;
+  }
+
+  .draw-btn:hover {
+    background: rgba(249, 115, 22, 0.35);
+  }
+
+  .draw-btn.finish {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.4);
+  }
+
+  .draw-btn.finish:hover {
+    background: rgba(34, 197, 94, 0.35);
+  }
+
+  .draw-btn.cancel {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+
+  .draw-btn.cancel:hover {
+    background: rgba(239, 68, 68, 0.35);
+  }
+
   /* Bottom Right Legend */
   .legend {
     position: absolute;
@@ -594,25 +900,56 @@
     padding: 12px 14px;
     border-radius: 10px;
     color: white;
-    min-width: 260px;
-    max-width: 300px;
+    min-width: 520px;
+    max-width: 600px;
+  }
+
+  .legend-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 2px;
   }
 
   .legend-title-btn {
-    display: block;
-    width: 100%;
+    flex: 1;
     text-align: left;
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 600;
     background: none;
     border: none;
     color: white;
-    padding: 2px 0 8px 0;
+    padding: 0;
     cursor: pointer;
   }
 
   .legend-title-btn:hover {
     color: #f97316;
+  }
+
+  .area-total {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin: 0 0 8px 0;
+  }
+
+  .oa-count {
+    color: #666;
+  }
+
+  .clear-btn {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    color: #ff6b6b;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+
+  .clear-btn:hover {
+    background: rgba(255, 107, 107, 0.35);
   }
 
   .legend-hint {
@@ -631,12 +968,77 @@
     50% { opacity: 0.4; }
   }
 
-  /* Carbon overrides */
-  :global(.menu .bx--dropdown) {
-    background: rgba(50, 50, 50, 0.8) !important;
+  /* Bottom Left: info circle tooltip */
+  .info-tip {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 1000;
   }
 
-  :global(.menu .bx--search-input) {
+  .info-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(30, 30, 30, 0.92);
+    color: #ccc;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: help;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .info-tip:hover .info-icon {
+    color: white;
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .info-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: rgba(30, 30, 30, 0.95);
+    color: white;
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .info-tip:hover .info-tooltip {
+    opacity: 1;
+  }
+
+  /* Carbon overrides */
+  :global(.settings .bx--search) {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  :global(.settings .bx--search-input) {
     background: rgba(50, 50, 50, 0.8) !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .draw-hint {
+    font-size: 0.7rem;
+    color: #888;
+    margin: 0;
+    line-height: 1.4;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 </style>

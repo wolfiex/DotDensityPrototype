@@ -5,11 +5,9 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview",
-    "test": "playwright test"
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "@playwright/test": "1.45.0",
     "@sveltejs/adapter-static": "3.0.1",
     "@sveltejs/kit": "2.5.7",
     "@sveltejs/vite-plugin-svelte": "3.1.0",
