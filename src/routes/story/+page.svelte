@@ -55,7 +55,7 @@
   let sectionRefs = [];
 
   $: activeIndex = steps.findIndex(s => s.id === activeStepId);
-  $: mapActive = activeStepId === 'product';
+  $: mapActive = activeStepId === 'product' || activeStepId === 'data';
 
   onMount(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -97,17 +97,25 @@
   <!-- ─── Fixed left: visual illustrations ─── -->
   <div class="visual-pane" class:map-active={mapActive}>
 
-    <!-- SVG / image illustrations (all steps except product) -->
-    {#each steps.filter(s => s.id !== 'product') as step (step.id)}
+    <!-- Chapter I: live map iframe — always in DOM, shown when data step is active -->
+    <div
+      class="visual-slot map-slot"
+      style="opacity:{activeStepId === 'data' ? 1 : 0}; pointer-events:{activeStepId === 'data' ? 'auto' : 'none'};"
+    >
+      <iframe
+        src="/#12/51.50740/-0.12760"
+        title="London dot density"
+        class="map-embed"
+      />
+    </div>
+
+    <!-- SVG illustrations (chapters II–V) -->
+    {#each steps.filter(s => s.id !== 'data' && s.id !== 'product') as step (step.id)}
       {#if step.id === activeStepId}
         <div class="visual-slot" in:fade={{ duration: 350 }} out:fade={{ duration: 200 }}>
 
-          <!-- Chapter I: London dot density image -->
-          {#if step.id === 'data'}
-            <img src="/londondot.png" alt="London dot density map" class="chapter-img" />
-
           <!-- Chapter II: Tile pyramid -->
-          {:else if step.id === 'tiles'}
+          {#if step.id === 'tiles'}
             <svg viewBox="0 0 520 380" class="illus" xmlns="http://www.w3.org/2000/svg">
               <text x="260" y="26" class="illus-title" text-anchor="middle">Vector Tile Pyramid</text>
               {#each [
