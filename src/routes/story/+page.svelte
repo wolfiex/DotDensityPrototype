@@ -373,16 +373,6 @@
     overflow: visible;
   }
 
-  /* ── Full-pane chapter image ── */
-  .chapter-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    pointer-events: none;
-  }
-
   /* ── Live map iframe ── */
   .map-slot {
     transition: opacity 0.4s ease;
@@ -398,8 +388,7 @@
   }
 
   /* Enable interaction when iframe is showing */
-  .visual-pane.map-active,
-  .visual-slot.interactive {
+  .visual-pane.map-active {
     pointer-events: auto;
   }
   :global(.illus-title) {
@@ -553,29 +542,6 @@
     font-family: 'Merriweather', Georgia, serif;
     font-weight: 300;
   }
-
-  /* ── Outro ── */
-  .outro {
-    min-height: 60vh;
-    display: flex;
-    align-items: center;
-    z-index: 2;
-    position: relative;
-  }
-  .cta {
-    display: inline-block;
-    margin-top: 1.5rem;
-    padding: 0.75rem 1.6rem;
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border-radius: 6px;
-    transition: opacity 0.2s, transform 0.2s;
-  }
-  .cta:hover { opacity: 0.85; transform: translateY(-1px); }
 
   .step-cta {
     display: inline-block;

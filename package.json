@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pages:dev": "wrangler pages dev build --port 3001",
+    "deploy": "npm run build && wrangler pages deploy build"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "3.0.1",

@@ -10,7 +10,7 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: true
+    sourcemap: false
   },
   optimizeDeps: {
     include: ['maplibre-gl', 'carbon-components-svelte']

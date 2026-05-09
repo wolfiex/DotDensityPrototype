@@ -1,0 +1,23 @@
+# HTML — always revalidate
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# JS / CSS bundles — immutable (Vite adds content hashes)
+/_app/immutable/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Static assets
+/londondot.png
+  Cache-Control: public, max-age=86400
+
+/style-dark.json
+  Cache-Control: public, max-age=86400
+
+/favicon.png
+  Cache-Control: public, max-age=86400
+
+# Security headers on all routes
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
